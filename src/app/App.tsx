@@ -10,8 +10,23 @@ type Tab = 'alerts' | 'systems' | 'settings';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('alerts');
+  const [showHeader, setShowHeader] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   const activeAlertsCount = getAllActiveAlerts().length;
+
+  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+    const currentScrollY = e.currentTarget.scrollTop;
+    
+    if (currentScrollY > lastScrollY && currentScrollY > 60) {
+      // Scrolling down
+      setShowHeader(false);
+    } else {
+      // Scrolling up
+      setShowHeader(true);
+    }
+    setLastScrollY(currentScrollY);
+  };
 
   const tabs = [
     {
@@ -35,7 +50,15 @@ export default function App() {
   return (
     <div className="min-h-screen bg-muted/20 md:flex md:items-center md:justify-center md:p-2">
       <div className="w-full max-w-[480px] h-[100dvh] md:h-[96vh] bg-background flex flex-col relative md:rounded-2xl md:border-4 md:border-card md:shadow-xl overflow-hidden">
-        <header className="bg-card border-b border-border px-4 py-4 sticky top-0 z-40">
+        <motion.header 
+          initial={false}
+          animate={{ 
+            height: showHeader ? 'auto' : 0,
+            opacity: showHeader ? 1 : 0
+          }}
+          transition={{ duration: 0.3, ease: 'easeInOut' }}
+          className="bg-card border-b border-border px-4 py-4 sticky top-0 z-40 overflow-hidden"
+        >
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between">
               <div>
@@ -59,9 +82,12 @@ export default function App() {
               )}
             </div>
           </div>
-        </header>
+        </motion.header>
 
-        <main className="flex-1 overflow-y-auto pb-20 md:pb-6">
+        <main 
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto pb-20 md:pb-6"
+        >
           {activeTab === 'settings' ? (
             <SettingsMain />
           ) : (
