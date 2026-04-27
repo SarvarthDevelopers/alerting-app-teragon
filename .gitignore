@@ -1,0 +1,14 @@
+# node_modules
+node_modules/
+.DS_Store
+dist/
+dist-ssr/
+*.local
+.vercel
+.vercel/
+.next/
+build/
+.cache/
+.npm/
+pnpm-lock.yaml
+package-lock.json
