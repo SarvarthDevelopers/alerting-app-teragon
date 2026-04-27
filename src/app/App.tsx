@@ -18,11 +18,19 @@ export default function App() {
 
   const handleScroll = (e: React.UIEvent<HTMLElement>) => {
     const currentScrollY = e.currentTarget.scrollTop;
+    const scrollHeight = e.currentTarget.scrollHeight;
+    const clientHeight = e.currentTarget.clientHeight;
+    const maxScroll = scrollHeight - clientHeight;
     const diff = currentScrollY - lastScrollY;
+
+    // Ignore rubber-banding or overscroll events on mobile
+    if (currentScrollY < 0 || currentScrollY > maxScroll) {
+      return;
+    }
 
     if (currentScrollY <= 10) {
       setShowHeader(true);
-    } else if (Math.abs(diff) > 5) {
+    } else if (Math.abs(diff) > 10) {
       if (currentScrollY > lastScrollY && currentScrollY > 80) {
         setShowHeader(false);
       } else if (currentScrollY < lastScrollY) {
@@ -65,12 +73,10 @@ export default function App() {
         <motion.header
           initial={false}
           animate={{
-            height: showHeader ? 'auto' : 0,
-            opacity: showHeader ? 1 : 0,
-            borderBottomWidth: showHeader ? 1 : 0
+            y: showHeader ? 0 : '-100%',
           }}
           transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-          className="bg-card border-border z-40 overflow-hidden shrink-0"
+          className="absolute top-0 left-0 right-0 bg-card border-b border-border z-50 shrink-0"
         >
           <div className="px-4 py-4">
             <div className="max-w-7xl mx-auto">
@@ -104,6 +110,7 @@ export default function App() {
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto pb-20 md:pb-6"
         >
+          <div className="h-[82px] shrink-0" /> {/* Fixed spacer to prevent layout shift */}
           {activeTab === 'settings' ? (
             <SettingsMain />
           ) : (
