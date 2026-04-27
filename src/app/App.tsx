@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { ActiveAlertsFeed } from './components/ActiveAlertsFeed';
 import { SystemsView } from './components/SystemsView';
 import { SettingsMain } from './components/settings/SettingsMain';
@@ -12,18 +12,22 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('alerts');
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const mainRef = useRef<HTMLDivElement>(null);
 
   const activeAlertsCount = getAllActiveAlerts().length;
 
   const handleScroll = (e: React.UIEvent<HTMLElement>) => {
     const currentScrollY = e.currentTarget.scrollTop;
-    
-    if (currentScrollY > lastScrollY && currentScrollY > 60) {
-      // Scrolling down
-      setShowHeader(false);
-    } else {
-      // Scrolling up
+    const diff = currentScrollY - lastScrollY;
+
+    if (currentScrollY <= 10) {
       setShowHeader(true);
+    } else if (Math.abs(diff) > 5) {
+      if (currentScrollY > lastScrollY && currentScrollY > 80) {
+        setShowHeader(false);
+      } else if (currentScrollY < lastScrollY) {
+        setShowHeader(true);
+      }
     }
     setLastScrollY(currentScrollY);
   };
@@ -48,43 +52,55 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-muted/20 md:flex md:items-center md:justify-center md:p-2">
+    <div 
+      className="min-h-screen bg-muted/20 md:flex md:items-center md:justify-center md:p-2"
+      onWheel={(e) => {
+        // Forward wheel events to main container if not hovering it directly
+        if (mainRef.current && !mainRef.current.contains(e.target as Node)) {
+          mainRef.current.scrollTop += e.deltaY;
+        }
+      }}
+    >
       <div className="w-full max-w-[480px] h-[100dvh] md:h-[96vh] bg-background flex flex-col relative md:rounded-2xl md:border-4 md:border-card md:shadow-xl overflow-hidden">
-        <motion.header 
+        <motion.header
           initial={false}
-          animate={{ 
+          animate={{
             height: showHeader ? 'auto' : 0,
-            opacity: showHeader ? 1 : 0
+            opacity: showHeader ? 1 : 0,
+            borderBottomWidth: showHeader ? 1 : 0
           }}
-          transition={{ duration: 0.3, ease: 'easeInOut' }}
-          className="bg-card border-b border-border px-4 py-4 sticky top-0 z-40 overflow-hidden"
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          className="bg-card border-border z-40 overflow-hidden shrink-0"
         >
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-semibold text-foreground">
-                  Teragon
-                </h1>
-                <p className="text-sm text-muted-foreground">Steel Quality Monitoring</p>
+          <div className="px-4 py-4">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-semibold text-foreground">
+                    Teragon
+                  </h1>
+                  <p className="text-sm text-muted-foreground">Steel Quality Monitoring</p>
+                </div>
+                {activeAlertsCount > 0 && (
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    onClick={() => setActiveTab('alerts')}
+                    className="px-3 py-1.5 bg-primary text-primary-foreground rounded-full font-bold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity"
+                    aria-label={`View ${activeAlertsCount} active alerts`}
+                  >
+                    <div className="w-2 h-2 bg-primary-foreground rounded-full animate-pulse" />
+                    {activeAlertsCount} Active
+                  </motion.button>
+                )}
               </div>
-              {activeAlertsCount > 0 && (
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  onClick={() => setActiveTab('alerts')}
-                  className="px-3 py-1.5 bg-primary text-primary-foreground rounded-full font-bold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity"
-                  aria-label={`View ${activeAlertsCount} active alerts`}
-                >
-                  <div className="w-2 h-2 bg-primary-foreground rounded-full animate-pulse" />
-                  {activeAlertsCount} Active
-                </motion.button>
-              )}
             </div>
           </div>
         </motion.header>
 
         <main 
+          ref={mainRef}
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto pb-20 md:pb-6"
         >
