@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Measurement, Severity } from '../types';
 import { getAnomalyConfig, getSystemDisplayName } from '../data/mockData';
 import { displaySettings } from '../data/settingsData';
@@ -53,6 +53,17 @@ export function MeasurementCard({ measurement, forceCollapsed = false }: Measure
   const [isExpanded, setIsExpanded] = useState(forceCollapsed ? false : hasAlerts);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showLargeUnit, setShowLargeUnit] = useState(true);
+  const [scrubberPos, setScrubberPos] = useState<number | null>(null);
+  const rulerRef = useRef<HTMLDivElement>(null);
+
+  const handleInteraction = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!rulerRef.current) return;
+    const rect = rulerRef.current.getBoundingClientRect();
+    const clientX = 'touches' in e ? (e as React.TouchEvent).touches[0].clientX : (e as React.MouseEvent).clientX;
+    const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+    const percent = (x / rect.width) * 100;
+    setScrubberPos(percent);
+  };
 
   const formatLength = (lengthMm: number): string => {
     const unitSystem = displaySettings.unitSystem;
@@ -225,8 +236,26 @@ export function MeasurementCard({ measurement, forceCollapsed = false }: Measure
                 </button>
               </div>
 
-              <div className="mb-4">
-                <div className="relative w-full h-12 bg-muted rounded-xl overflow-hidden flex items-center justify-between px-0">
+              <div className="mb-4 relative">
+                {scrubberPos !== null && (
+                  <div
+                    className="absolute bottom-[calc(100%+8px)] -translate-x-1/2 bg-black text-white px-2 py-1 rounded-md text-xs font-bold whitespace-nowrap z-30 pointer-events-none shadow-lg"
+                    style={{ left: `${scrubberPos}%` }}
+                  >
+                    {formatLength((scrubberPos / 100) * measurement.productLength)}
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-[4px] border-transparent border-t-black" />
+                  </div>
+                )}
+                <div
+                  ref={rulerRef}
+                  className="relative w-full h-12 bg-muted rounded-xl overflow-hidden flex items-center justify-between px-0 cursor-crosshair touch-none"
+                  onMouseMove={handleInteraction}
+                  onMouseDown={handleInteraction}
+                  onTouchMove={handleInteraction}
+                  onTouchStart={handleInteraction}
+                  onMouseLeave={() => setScrubberPos(null)}
+                  onTouchEnd={() => setScrubberPos(null)}
+                >
                   {/* Ruler markers */}
                   {Array.from({ length: 21 }).map((_, i) => {
                     const isQuartile = i % 5 === 0;
@@ -269,6 +298,14 @@ export function MeasurementCard({ measurement, forceCollapsed = false }: Measure
                       />
                     );
                   })}
+
+                  {/* Scrubber Line */}
+                  {scrubberPos !== null && (
+                    <div
+                      className="absolute top-0 bottom-0 w-[2px] bg-black z-20 pointer-events-none"
+                      style={{ left: `${scrubberPos}%` }}
+                    />
+                  )}
                 </div>
               </div>
 
