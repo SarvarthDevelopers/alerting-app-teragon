@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ActiveAlertsFeed } from './components/ActiveAlertsFeed';
 import { SystemsView } from './components/SystemsView';
 import { SettingsMain } from './components/settings/SettingsMain';
@@ -13,6 +13,14 @@ export default function App() {
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const mainRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
+    setShowHeader(true);
+    setLastScrollY(0);
+  }, [activeTab]);
 
   const activeAlertsCount = getAllActiveAlerts().length;
 
