@@ -34,7 +34,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-muted/20 md:flex md:items-center md:justify-center md:p-2">
-      <div className="w-full max-w-[480px] min-h-screen md:min-h-0 md:h-[96vh] bg-background flex flex-col relative md:rounded-2xl md:border-4 md:border-card md:shadow-xl md:overflow-hidden">
+      <div className="w-full max-w-[480px] h-[100dvh] md:h-[96vh] bg-background flex flex-col relative md:rounded-2xl md:border-4 md:border-card md:shadow-xl overflow-hidden">
         <header className="bg-card border-b border-border px-4 py-4 sticky top-0 z-40">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between">

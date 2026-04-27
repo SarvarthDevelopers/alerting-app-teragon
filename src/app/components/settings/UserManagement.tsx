@@ -66,7 +66,7 @@ export function UserManagement({ onBack }: UserManagementProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="bg-background pb-20">
       <div className="sticky top-0 bg-card border-b border-border z-10">
         <div className="px-4 py-4">
         <button

@@ -49,7 +49,7 @@ export function AnomalyTypesSettings({ onBack }: AnomalyTypesSettingsProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       <div className="sticky top-0 bg-card border-b border-border z-10">
         <div className="px-4 py-4">
           <button
