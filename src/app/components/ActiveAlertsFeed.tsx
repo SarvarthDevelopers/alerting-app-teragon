@@ -7,7 +7,15 @@ import { Bell, SlidersHorizontal } from 'lucide-react';
 
 type AlertFilter = 'active' | 'acknowledged';
 
-export function ActiveAlertsFeed() {
+import { AnomalyConfig, SeverityConfig, DisplaySettings as DisplaySettingsType } from '../types';
+
+interface ActiveAlertsFeedProps {
+  anomalyConfigs: AnomalyConfig[];
+  severityConfigs: SeverityConfig[];
+  displaySettings: DisplaySettingsType;
+}
+
+export function ActiveAlertsFeed({ anomalyConfigs, severityConfigs, displaySettings }: ActiveAlertsFeedProps) {
   const [activeFilter, setActiveFilter] = useState<AlertFilter>('active');
   const [alertCount, setAlertCount] = useState(0);
   const [hasNewAlert, setHasNewAlert] = useState(false);
@@ -69,13 +77,21 @@ export function ActiveAlertsFeed() {
         if (!hasMatchingSeverity) return false;
       }
 
+      // Filter by active anomaly types in global settings
+      const hasActiveType = m.alerts.some(a => {
+        const config = anomalyConfigs.find(c => c.type === a.anomalyType);
+        return config?.isActive !== false;
+      });
+      if (m.alerts.length > 0 && !hasActiveType) return false;
+
       return true;
     })
     .sort((a, b) => {
       const aHighestPriority = Math.min(...a.alerts.map(alert => alert.priority));
       const bHighestPriority = Math.min(...b.alerts.map(alert => alert.priority));
       return aHighestPriority - bHighestPriority;
-    });
+    })
+    .slice(0, displaySettings.latestNCount);
 
   const hasActiveFilters = filters.anomalyTypes.length > 0 ||
                           filters.severities.length > 0 ||
@@ -183,6 +199,9 @@ export function ActiveAlertsFeed() {
                 <MeasurementCard
                   measurement={measurement}
                   forceCollapsed={activeFilter === 'acknowledged'}
+                  anomalyConfigs={anomalyConfigs}
+                  severityConfigs={severityConfigs}
+                  displaySettings={displaySettings}
                 />
               </motion.div>
             ))}

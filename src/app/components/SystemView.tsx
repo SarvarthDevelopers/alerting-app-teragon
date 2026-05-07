@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { SystemType, Measurement } from '../types';
+import { SystemType, Measurement, AnomalyConfig, SeverityConfig, DisplaySettings as DisplaySettingsType } from '../types';
 import { getMeasurementsBySystem, getSystemDisplayName } from '../data/mockData';
 import { MeasurementCard } from './MeasurementCard';
 import { FilterDrawer, FilterOptions } from './FilterDrawer';
@@ -8,9 +8,12 @@ import { SlidersHorizontal } from 'lucide-react';
 
 interface SystemViewProps {
   system: SystemType;
+  anomalyConfigs: AnomalyConfig[];
+  severityConfigs: SeverityConfig[];
+  displaySettings: DisplaySettingsType;
 }
 
-export function SystemView({ system }: SystemViewProps) {
+export function SystemView({ system, anomalyConfigs, severityConfigs, displaySettings }: SystemViewProps) {
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [filters, setFilters] = useState<FilterOptions>({
     anomalyTypes: [],
@@ -52,8 +55,15 @@ export function SystemView({ system }: SystemViewProps) {
       if (!hasMatchingSeverity) return false;
     }
 
+    // Filter by active anomaly types in global settings
+    const hasActiveType = m.alerts.some(a => {
+      const config = anomalyConfigs.find(c => c.type === a.anomalyType);
+      return config?.isActive !== false;
+    });
+    if (m.alerts.length > 0 && !hasActiveType) return false;
+
     return true;
-  });
+  }).slice(0, displaySettings.latestNCount);
 
   const activeCount = measurements.filter(m =>
     m.alerts.some(a => a.currentState === 'NEW' || a.currentState === 'ESCALATED')
@@ -122,7 +132,12 @@ export function SystemView({ system }: SystemViewProps) {
             >
               {measurements.map((measurement) => (
                 <motion.div layout key={measurement.id}>
-                  <MeasurementCard measurement={measurement} />
+                  <MeasurementCard 
+                    measurement={measurement} 
+                    anomalyConfigs={anomalyConfigs}
+                    severityConfigs={severityConfigs}
+                    displaySettings={displaySettings}
+                  />
                 </motion.div>
               ))}
             </motion.div>

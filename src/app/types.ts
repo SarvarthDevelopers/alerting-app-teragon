@@ -4,6 +4,14 @@ export type AlertState = 'NEW' | 'ACKNOWLEDGED' | 'ESCALATED' | 'CLEARED';
 
 export type Severity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
+export interface SeverityConfig {
+  id: Severity;
+  label: string;
+  color: string;
+  audioAlarm: boolean;
+  flashlight: boolean;
+}
+
 export type UserRole = 'OPERATOR' | 'LEAD' | 'ADMIN';
 
 export type NetworkType = 'WIFI' | 'LAN' | 'VPN' | 'CELLULAR';

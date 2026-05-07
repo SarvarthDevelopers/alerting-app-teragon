@@ -66,19 +66,19 @@ export function SeverityBadge({ severity, size = 'md' }: SeverityBadgeProps) {
   const severityConfig = {
     CRITICAL: {
       label: 'Critical',
-      className: 'bg-severity-critical text-white'
+      style: { backgroundColor: 'var(--severity-critical)' }
     },
     HIGH: {
       label: 'High',
-      className: 'bg-severity-high text-white'
+      style: { backgroundColor: 'var(--severity-high)' }
     },
     MEDIUM: {
       label: 'Medium',
-      className: 'bg-severity-medium text-white'
+      style: { backgroundColor: 'var(--severity-medium)' }
     },
     LOW: {
       label: 'Low',
-      className: 'bg-severity-low text-white'
+      style: { backgroundColor: 'var(--severity-low)' }
     }
   };
 
@@ -86,7 +86,8 @@ export function SeverityBadge({ severity, size = 'md' }: SeverityBadgeProps) {
 
   return (
     <span
-      className={`inline-flex items-center font-semibold rounded-md ${sizeClasses[size]} ${config.className}`}
+      className={`inline-flex items-center font-semibold rounded-md text-white ${sizeClasses[size]}`}
+      style={config.style}
     >
       {config.label}
     </span>

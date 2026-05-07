@@ -1,9 +1,15 @@
 import { useState } from 'react';
-import { SystemType } from '../types';
+import { SystemType, AnomalyConfig, SeverityConfig, DisplaySettings as DisplaySettingsType } from '../types';
 import { SystemView } from './SystemView';
 import { motion } from 'motion/react';
 
-export function SystemsView() {
+interface SystemsViewProps {
+  anomalyConfigs: AnomalyConfig[];
+  severityConfigs: SeverityConfig[];
+  displaySettings: DisplaySettingsType;
+}
+
+export function SystemsView({ anomalyConfigs, severityConfigs, displaySettings }: SystemsViewProps) {
   const [activeSystem, setActiveSystem] = useState<SystemType>('SURFACE_INSPECTION');
 
   const systems: { id: SystemType; label: string }[] = [
@@ -43,7 +49,12 @@ export function SystemsView() {
         </div>
       </div>
 
-      <SystemView system={activeSystem} />
+      <SystemView 
+        system={activeSystem} 
+        anomalyConfigs={anomalyConfigs}
+        severityConfigs={severityConfigs}
+        displaySettings={displaySettings}
+      />
     </div>
   );
 }

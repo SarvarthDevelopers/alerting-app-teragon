@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react';
-import { Measurement, Severity } from '../types';
-import { getAnomalyConfig, getSystemDisplayName } from '../data/mockData';
-import { displaySettings } from '../data/settingsData';
+import { Measurement, Severity, AnomalyConfig, SeverityConfig, DisplaySettings as DisplaySettingsType } from '../types';
+import { getSystemDisplayName } from '../data/mockData';
 import { SeverityBadge } from './AlertBadge';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -41,9 +40,18 @@ const formatExpandedTime = (timestamp: string): string => {
 interface MeasurementCardProps {
   measurement: Measurement;
   forceCollapsed?: boolean;
+  anomalyConfigs: AnomalyConfig[];
+  severityConfigs: SeverityConfig[];
+  displaySettings: DisplaySettingsType;
 }
 
-export function MeasurementCard({ measurement, forceCollapsed = false }: MeasurementCardProps) {
+export function MeasurementCard({ 
+  measurement, 
+  forceCollapsed = false,
+  anomalyConfigs,
+  severityConfigs,
+  displaySettings
+}: MeasurementCardProps) {
   const hasAlerts = measurement.alerts.length > 0;
   const activeAlerts = measurement.alerts.filter(a => a.currentState === 'NEW');
   const hasActiveAlerts = activeAlerts.length > 0;
@@ -105,29 +113,17 @@ export function MeasurementCard({ measurement, forceCollapsed = false }: Measure
 
   const getStatusColor = () => {
     if (!hasAlerts) return '#9fe870';
-
-    const hasCritical = measurement.alerts.some(a => a.severity === 'CRITICAL');
-    if (hasCritical) return '#dc2626';
-
-    const hasHigh = measurement.alerts.some(a => a.severity === 'HIGH');
-    if (hasHigh) return '#f97316';
-
-    const hasMedium = measurement.alerts.some(a => a.severity === 'MEDIUM');
-    if (hasMedium) return '#eab308';
-
-    return '#84cc16';
+    const highest = getHighestSeverity();
+    return highest ? `var(--severity-${highest.toLowerCase()})` : '#9fe870';
   };
 
   const getBorderColor = () => {
-    if (!hasAlerts) return '#e5e7eb';
-
-    const hasCritical = measurement.alerts.some(a => a.severity === 'CRITICAL');
-    if (hasCritical) return '#dc2626';
-
-    const hasHigh = measurement.alerts.some(a => a.severity === 'HIGH');
-    if (hasHigh) return '#f97316';
-
-    return '#e5e7eb';
+    if (!hasAlerts) return 'var(--border)';
+    const highest = getHighestSeverity();
+    if (highest === 'CRITICAL' || highest === 'HIGH') {
+      return `var(--severity-${highest.toLowerCase()})`;
+    }
+    return 'var(--border)';
   };
 
   const highestSeverity = getHighestSeverity();
@@ -148,16 +144,7 @@ export function MeasurementCard({ measurement, forceCollapsed = false }: Measure
   };
 
   const getSeverityColor = (severity: Severity): string => {
-    switch (severity) {
-      case 'CRITICAL':
-        return '#dc2626'; // Red
-      case 'HIGH':
-        return '#f97316'; // Orange
-      case 'MEDIUM':
-        return '#eab308'; // Yellow
-      case 'LOW':
-        return '#3b82f6'; // Blue (not green - green means OK)
-    }
+    return `var(--severity-${severity.toLowerCase()})`;
   };
 
   const segments = 30;
@@ -265,7 +252,7 @@ export function MeasurementCard({ measurement, forceCollapsed = false }: Measure
 
                   {/* Anomaly bars */}
                   {measurement.alerts.map(alert => {
-                    const config = getAnomalyConfig(alert.anomalyType);
+                    const config = anomalyConfigs.find(c => c.type === alert.anomalyType);
                     const startPercent = (alert.startPos / measurement.productLength) * 100;
                     const widthPercent = (alert.length / measurement.productLength) * 100;
 
@@ -296,7 +283,7 @@ export function MeasurementCard({ measurement, forceCollapsed = false }: Measure
               {hasAlerts && (
                 <div className="space-y-2 mb-4">
                   {measurement.alerts.map(alert => {
-                    const config = getAnomalyConfig(alert.anomalyType);
+                    const config = anomalyConfigs.find(c => c.type === alert.anomalyType);
                     const endPos = Math.min(
                       alert.startPos + alert.length,
                       measurement.productLength

@@ -2,19 +2,19 @@
 
 :root {
   --font-size: 16px;
-  --background: #fafafa;
+  --background: #f5f5f5;
   --foreground: #0a0f0d;
   --card: #ffffff;
   --card-foreground: #0a0f0d;
   --popover: #ffffff;
   --popover-foreground: #0a0f0d;
-  --primary: #9fe870;
+  --primary: #cfff00;
   --primary-foreground: #03231c;
   --secondary: #f4f4f5;
   --secondary-foreground: #0a0f0d;
   --muted: #f4f4f5;
   --muted-foreground: #6b7280;
-  --accent: #9fe870;
+  --accent: #cfff00;
   --accent-foreground: #03231c;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
@@ -49,13 +49,13 @@
   --card-foreground: #f9fafb;
   --popover: #1a1f1d;
   --popover-foreground: #f9fafb;
-  --primary: #9fe870;
+  --primary: #cfff00;
   --primary-foreground: #03231c;
   --secondary: #1f2937;
   --secondary-foreground: #f9fafb;
   --muted: #1f2937;
   --muted-foreground: #9ca3af;
-  --accent: #9fe870;
+  --accent: #cfff00;
   --accent-foreground: #03231c;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
@@ -183,5 +183,37 @@
     font-size: var(--text-base);
     font-weight: var(--font-weight-normal);
     line-height: 1.5;
+  }
+
+  /* Custom Scrollbar Styling - Premium & Low-key */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--muted-foreground) transparent;
+  }
+
+  /* Webkit browsers (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.4);
+  }
+
+  /* Prevent layout shift by reserving space for scrollbar */
+  .overflow-y-auto, .overflow-y-scroll {
+    scrollbar-gutter: stable;
   }
 }

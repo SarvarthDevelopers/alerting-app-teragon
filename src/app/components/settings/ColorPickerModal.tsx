@@ -1,6 +1,13 @@
-import { useState } from 'react';
-import { X } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { useState, useEffect } from 'react';
+import { X, Check } from 'lucide-react';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+  DrawerClose,
+} from "../ui/drawer";
 
 interface ColorPickerModalProps {
   isOpen: boolean;
@@ -9,114 +16,117 @@ interface ColorPickerModalProps {
   onSave: (color: string) => void;
 }
 
-export function ColorPickerModal({ isOpen, currentColor, onClose, onSave }: ColorPickerModalProps) {
-  const [color, setColor] = useState(currentColor);
-  const [hexInput, setHexInput] = useState(currentColor);
+const PRESET_COLORS = [
+  { name: 'Critical Red', value: '#FF3B30' },
+  { name: 'High Orange', value: '#FF9500' },
+  { name: 'Medium Yellow', value: '#FFCC00' },
+  { name: 'Low Blue', value: '#007AFF' },
+  { name: 'System Green', value: '#34C759' },
+  { name: 'Teal', value: '#5AC8FA' },
+  { name: 'Indigo', value: '#5856D6' },
+  { name: 'Purple', value: '#AF52DE' },
+  { name: 'Pink', value: '#FF2D55' },
+  { name: 'Gray', value: '#8E8E93' },
+  { name: 'Black', value: '#000000' },
+  { name: 'Neon', value: '#CFFF00' },
+];
 
-  const handleHexChange = (value: string) => {
-    setHexInput(value);
-    if (/^#[0-9A-F]{6}$/i.test(value)) {
-      setColor(value);
+export function ColorPickerModal({ isOpen, currentColor, onClose, onSave }: ColorPickerModalProps) {
+  const [selectedColor, setSelectedColor] = useState(currentColor);
+  const [customHex, setCustomHex] = useState(currentColor);
+
+  useEffect(() => {
+    setSelectedColor(currentColor);
+    setCustomHex(currentColor);
+  }, [currentColor, isOpen]);
+
+  const handleHexChange = (val: string) => {
+    const formatted = val.startsWith('#') ? val : `#${val}`;
+    setCustomHex(formatted);
+    if (/^#[0-9A-F]{6}$/i.test(formatted)) {
+      setSelectedColor(formatted);
     }
   };
 
-  const handleSave = () => {
-    onSave(color);
-    onClose();
-  };
-
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-0 md:p-4"
-          onClick={onClose}
-        >
-          <motion.div
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            onClick={(e) => e.stopPropagation()}
-            className="bg-card w-full md:max-w-md md:rounded-2xl rounded-t-2xl"
-          >
-            <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-foreground">Choose Color</h2>
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-muted rounded-lg transition-colors"
-              >
+    <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DrawerContent className="bg-card border-t border-border outline-none mx-auto max-w-[480px] left-0 right-0">
+        <DrawerHeader className="px-6 pt-6 pb-2">
+          <div className="flex items-center justify-between">
+            <DrawerTitle className="text-2xl font-bold text-foreground">Choose Color</DrawerTitle>
+            <DrawerClose asChild>
+              <button className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground">
                 <X size={24} />
               </button>
-            </div>
+            </DrawerClose>
+          </div>
+        </DrawerHeader>
 
-            <div className="p-6 space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-3 block">
-                    Color Picker
-                  </label>
-                  <input
-                    type="color"
-                    value={color}
-                    onChange={(e) => {
-                      setColor(e.target.value);
-                      setHexInput(e.target.value);
-                    }}
-                    className="w-full h-48 rounded-xl border-2 border-border cursor-pointer"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Hex Code
-                  </label>
-                  <input
-                    type="text"
-                    value={hexInput}
-                    onChange={(e) => handleHexChange(e.target.value.toUpperCase())}
-                    placeholder="#FF5733"
-                    className="w-full px-4 py-3 bg-input-background border border-input rounded-lg text-foreground font-mono text-lg"
-                    maxLength={7}
-                  />
-                </div>
-
-                <div className="bg-muted/30 rounded-xl p-4">
-                  <p className="text-xs text-muted-foreground mb-3">Preview</p>
-                  <div className="flex items-center gap-4">
-                    <div
-                      className="w-20 h-20 rounded-xl border-2 border-border"
-                      style={{ backgroundColor: color }}
-                    />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">Selected Color</p>
-                      <p className="text-xs font-mono text-muted-foreground mt-1">{color}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={handleSave}
-                  className="flex-1 py-4 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90 transition-opacity"
+        <div className="px-6 py-4 space-y-8">
+          {/* Preset Grid */}
+          <div className="grid grid-cols-4 gap-4">
+            {PRESET_COLORS.map((preset) => (
+              <button
+                key={preset.value}
+                onClick={() => {
+                  setSelectedColor(preset.value);
+                  setCustomHex(preset.value);
+                }}
+                className="group relative flex flex-col items-center gap-2"
+              >
+                <div 
+                  className={`w-14 h-14 rounded-2xl border-2 transition-all duration-200 flex items-center justify-center ${
+                    selectedColor.toLowerCase() === preset.value.toLowerCase() 
+                      ? 'border-primary scale-110 shadow-lg' 
+                      : 'border-transparent hover:scale-105'
+                  }`}
+                  style={{ backgroundColor: preset.value }}
                 >
-                  SAVE COLOR
-                </button>
-                <button
-                  onClick={onClose}
-                  className="px-6 py-4 bg-muted text-foreground rounded-xl font-bold hover:bg-muted/70 transition-colors"
-                >
-                  CANCEL
-                </button>
-              </div>
+                  {selectedColor.toLowerCase() === preset.value.toLowerCase() && (
+                    <Check size={24} className={preset.value.toLowerCase() === '#ffffff' ? 'text-black' : 'text-white'} />
+                  )}
+                </div>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight opacity-0 group-hover:opacity-100 transition-opacity">
+                  {preset.name}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Custom Hex Input */}
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">
+              Custom Hex Code
+            </label>
+            <div className="flex items-center gap-3">
+              <div 
+                className="w-12 h-12 rounded-xl border border-border shrink-0" 
+                style={{ backgroundColor: selectedColor }}
+              />
+              <input
+                type="text"
+                value={customHex.toUpperCase()}
+                onChange={(e) => handleHexChange(e.target.value)}
+                placeholder="#000000"
+                className="flex-1 h-12 bg-muted/30 border border-border rounded-xl px-4 font-mono font-bold text-lg text-foreground focus:outline-none focus:border-primary transition-colors"
+                maxLength={7}
+              />
             </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          </div>
+        </div>
+
+        <DrawerFooter className="px-6 pt-2 pb-10">
+          <button
+            onClick={() => {
+              onSave(selectedColor);
+              onClose();
+            }}
+            className="w-full h-14 bg-primary text-primary-foreground rounded-2xl font-bold text-lg shadow-lg active:scale-[0.98] transition-transform"
+          >
+            Apply Color
+          </button>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   );
 }

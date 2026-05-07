@@ -1,4 +1,11 @@
-import { AnomalyConfig, DisplaySettings, NetworkConfig, User } from '../types';
+import { AnomalyConfig, DisplaySettings, NetworkConfig, User, SeverityConfig } from '../types';
+
+export const severityConfigs: SeverityConfig[] = [
+  { id: 'CRITICAL', label: 'CRITICAL', color: '#dc2626', audioAlarm: true, flashlight: true },
+  { id: 'HIGH', label: 'HIGH', color: '#f97316', audioAlarm: true, flashlight: true },
+  { id: 'MEDIUM', label: 'MEDIUM', color: '#eab308', audioAlarm: false, flashlight: false },
+  { id: 'LOW', label: 'LOW', color: '#3b82f6', audioAlarm: false, flashlight: false },
+];
 
 export const anomalyConfigs: AnomalyConfig[] = [
   {
