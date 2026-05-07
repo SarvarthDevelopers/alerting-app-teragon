@@ -1,5 +1,6 @@
 import { Bell, Activity, Settings, LayoutDashboard, LogOut, User } from 'lucide-react';
 import { motion } from 'motion/react';
+import logo from '../../assets/logo.svg';
 
 type Tab = 'alerts' | 'systems' | 'settings';
 
@@ -21,7 +22,7 @@ export function DesktopSidebar({ activeTab, setActiveTab, activeAlertsCount }: D
       <div className="p-8">
         <div className="flex items-center justify-center mb-12">
           <div className="w-full px-4">
-            <img src="/src/assets/logo.svg" alt="Teragon Logo" className="w-full h-auto" />
+            <img src={logo} alt="Teragon Logo" className="w-full h-auto" />
           </div>
         </div>
 

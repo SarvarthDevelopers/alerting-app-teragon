@@ -5,6 +5,7 @@ import { SettingsMain } from './components/settings/SettingsMain';
 import { getAllActiveAlerts } from './data/mockData';
 import { motion } from 'motion/react';
 import { Bell, Activity, Settings } from 'lucide-react';
+import logo from '../assets/logo.svg';
 
 type Tab = 'alerts' | 'systems' | 'settings';
 
@@ -90,7 +91,7 @@ export default function App() {
             <div className="max-w-7xl mx-auto">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <img src="/src/assets/logo.svg" alt="Teragon Logo" className="h-7 w-auto" />
+                  <img src={logo} alt="Teragon Logo" className="h-7 w-auto" />
                 </div>
                 {activeAlertsCount > 0 && (
                   <motion.button

@@ -6,6 +6,7 @@ import { SettingsMain } from '../app/components/settings/SettingsMain';
 import { getAllActiveAlerts } from '../app/data/mockData';
 import { motion, AnimatePresence } from 'motion/react';
 import { Bell, Activity, Settings, Search, User } from 'lucide-react';
+import logo from '../assets/logo.svg';
 
 type Tab = 'alerts' | 'systems' | 'settings';
 
@@ -90,7 +91,8 @@ export default function DesktopApp() {
         {/* Top Header */}
         <header className="h-20 bg-background/60 backdrop-blur-md border-b border-border/50 flex items-center justify-between px-10 shrink-0 z-40">
           <div className="flex items-center">
-             <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">anomaly alerting system</span>
+             <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mr-8">anomaly alerting system</span>
+             <img src={logo} alt="Teragon Logo" className="h-8 w-auto opacity-80" />
           </div>
           
           <div className="flex items-center gap-4">
