@@ -89,11 +89,8 @@ export default function App() {
           <div className="px-4 py-4">
             <div className="max-w-7xl mx-auto">
               <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-2xl font-semibold text-foreground">
-                    Teragon
-                  </h1>
-                  <p className="text-sm text-muted-foreground">Steel Quality Monitoring</p>
+                <div className="flex items-center">
+                  <img src="/src/assets/logo.svg" alt="Teragon Logo" className="h-7 w-auto" />
                 </div>
                 {activeAlertsCount > 0 && (
                   <motion.button

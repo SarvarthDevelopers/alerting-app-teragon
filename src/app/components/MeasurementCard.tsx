@@ -248,7 +248,7 @@ export function MeasurementCard({ measurement, forceCollapsed = false }: Measure
                 )}
                 <div
                   ref={rulerRef}
-                  className="relative w-full h-12 bg-muted rounded-xl overflow-hidden flex items-center justify-between px-0 cursor-crosshair touch-none"
+                  className="relative w-full h-12 bg-muted/30 rounded-xl overflow-hidden cursor-crosshair touch-none"
                   onMouseMove={handleInteraction}
                   onMouseDown={handleInteraction}
                   onTouchMove={handleInteraction}
@@ -256,28 +256,12 @@ export function MeasurementCard({ measurement, forceCollapsed = false }: Measure
                   onMouseLeave={() => setScrubberPos(null)}
                   onTouchEnd={() => setScrubberPos(null)}
                 >
-                  {/* Ruler markers */}
-                  {Array.from({ length: 21 }).map((_, i) => {
-                    const isQuartile = i % 5 === 0;
-                    return (
-                      <div
-                        key={i}
-                        className="flex items-center justify-center"
-                        style={{
-                          height: isQuartile ? '24px' : '10px',
-                          width: '0px'
-                        }}
-                      >
-                        <div
-                          className="bg-[#A8A8A8]"
-                          style={{
-                            width: '0.5px',
-                            height: isQuartile ? '24px' : '10px'
-                          }}
-                        />
-                      </div>
-                    );
-                  })}
+                  {/* Scale Markers Layer */}
+                  <div className="absolute inset-0 flex justify-between px-1 opacity-10 pointer-events-none">
+                    {Array.from({ length: 20 }).map((_, i) => (
+                      <div key={i} className={`w-px bg-foreground ${i % 5 === 0 ? 'h-full' : 'h-1/2 mt-auto'}`} />
+                    ))}
+                  </div>
 
                   {/* Anomaly bars */}
                   {measurement.alerts.map(alert => {
@@ -288,7 +272,7 @@ export function MeasurementCard({ measurement, forceCollapsed = false }: Measure
                     return (
                       <div
                         key={alert.id}
-                        className="absolute top-0 bottom-0 transition-all mix-blend-darken"
+                        className="absolute top-0 bottom-0 transition-all mix-blend-multiply"
                         style={{
                           left: `${startPercent}%`,
                           width: `${widthPercent}%`,
