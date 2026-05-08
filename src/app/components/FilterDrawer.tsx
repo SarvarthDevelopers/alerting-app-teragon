@@ -96,7 +96,7 @@ export function FilterDrawer({ isOpen, onClose, filters, onApplyFilters, showTim
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            transition={{ type: 'tween', duration: 0.36, ease: [0.32, 0.72, 0, 1] }}
             className="fixed bottom-0 left-0 right-0 mx-auto max-w-[480px] bg-card rounded-t-3xl shadow-2xl z-50 max-h-[85vh] overflow-hidden"
           >
             <div className="p-4 border-b border-border flex items-center justify-between">
@@ -143,8 +143,8 @@ export function FilterDrawer({ isOpen, onClose, filters, onApplyFilters, showTim
                       onClick={() => toggleSeverity(severity)}
                       className={`p-3 rounded-xl font-semibold transition-all ${
                         localFilters.severities.includes(severity)
-                          ? 'ring-2 ring-offset-2 ring-foreground'
-                          : 'opacity-60'
+                          ? 'shadow-[inset_0_0_0_3px_rgba(0,0,0,0.75)] opacity-100'
+                          : 'opacity-50'
                       }`}
                       style={{
                         backgroundColor: getSeverityColor(severity),

@@ -185,13 +185,18 @@
     line-height: 1.5;
   }
 
-  /* Custom Scrollbar Styling - Premium & Low-key */
+  /* Custom Scrollbar — overlay style, auto-hides when idle */
+  /* Firefox */
   * {
     scrollbar-width: thin;
-    scrollbar-color: var(--muted-foreground) transparent;
+    scrollbar-color: transparent transparent;
   }
 
-  /* Webkit browsers (Chrome, Safari, Edge) */
+  *:hover {
+    scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+  }
+
+  /* Webkit (Chrome, Safari, Edge) */
   ::-webkit-scrollbar {
     width: 5px;
     height: 5px;
@@ -202,18 +207,32 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
+    background: transparent;
     border-radius: 20px;
-    border: 1px solid transparent;
-    background-clip: padding-box;
+    transition: background 0.4s ease;
+  }
+
+  /* Show scrollbar thumb when hovering the scrollable element */
+  *:hover::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.18);
   }
 
   ::-webkit-scrollbar-thumb:hover {
     background: rgba(0, 0, 0, 0.4);
   }
 
-  /* Prevent layout shift by reserving space for scrollbar */
-  .overflow-y-auto, .overflow-y-scroll {
-    scrollbar-gutter: stable;
+  /*
+   * .scrollbar-hidden — completely removes the scrollbar and its gutter.
+   * Use on fixed-width scroll containers (e.g. phone mockup) where a scrollbar
+   * should never appear. Content remains scrollable via touch / mouse wheel.
+   * - Webkit: display:none removes the scrollbar AND the gutter (no layout shift)
+   * - Firefox: scrollbar-width:none achieves the same effect
+   */
+  .scrollbar-hidden {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
   }
 }

@@ -169,7 +169,7 @@ export default function App() {
         <main 
           ref={mainRef}
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto pb-20 md:pb-6 bg-background"
+          className="flex-1 overflow-y-auto bg-background scrollbar-hidden"
         >
           <div className="h-[72px] shrink-0" /> {/* Fixed spacer to prevent layout shift */}
           {activeTab === 'settings' ? (
@@ -204,7 +204,7 @@ export default function App() {
           )}
         </main>
 
-        <nav className="fixed bottom-0 left-0 right-0 md:absolute bg-card border-t border-border z-40">
+        <nav className="shrink-0 bg-card border-t border-border z-40">
           <div className="max-w-7xl mx-auto px-2 py-2">
             <div className="flex items-center justify-around gap-1">
               {tabs.map((tab) => {

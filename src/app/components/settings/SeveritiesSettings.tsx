@@ -42,10 +42,8 @@ export function SeveritiesSettings({ onBack, configs, onUpdate }: SeveritiesSett
       {/* Severity Cards */}
       <div className="p-4 space-y-4">
         {configs.map((severity) => (
-          <motion.div
+          <div
             key={severity.id}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
             className="bg-card border border-border rounded-2xl p-4 space-y-6 hover:border-foreground transition-all duration-200"
           >
             <div className="flex items-center justify-between">
@@ -103,7 +101,7 @@ export function SeveritiesSettings({ onBack, configs, onUpdate }: SeveritiesSett
                 />
               </div>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
 

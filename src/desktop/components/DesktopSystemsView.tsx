@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { SystemType } from '../../app/types';
-import { getMeasurementsBySystem, getSystemDisplayName } from '../../app/data/mockData';
+import { SystemType, AnomalyConfig, SeverityConfig, DisplaySettings } from '../../app/types';
+import { getMeasurementsBySystem, getSystemDisplayName, getAnomalyConfig } from '../../app/data/mockData';
 import { DesktopAlertCard } from './DesktopAlertCard';
 import { FilterBar } from './FilterBar';
 import { motion, AnimatePresence } from 'motion/react';
@@ -10,9 +10,12 @@ interface DesktopSystemsViewProps {
   setShowLargeUnit: (val: boolean) => void;
   acknowledgedIds: Set<string>;
   onAcknowledge: (id: string) => void;
+  displaySettings: DisplaySettings;
+  anomalyConfigs: AnomalyConfig[];
+  severityConfigs: SeverityConfig[];
 }
 
-export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, acknowledgedIds, onAcknowledge }: DesktopSystemsViewProps) {
+export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, acknowledgedIds, onAcknowledge, displaySettings, anomalyConfigs, severityConfigs }: DesktopSystemsViewProps) {
   const [activeSystem, setActiveSystem] = useState<SystemType>('SURFACE_INSPECTION');
   const [filters, setFilters] = useState({
     system: 'All Systems', // This will be handled by the tabs mainly
@@ -65,7 +68,7 @@ export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, acknowledg
       if (!hasMatchingSeverity) return false;
     }
     return true;
-  });
+  }).slice(0, displaySettings.latestNCount);
 
   const containerVariants = {
     hidden: { opacity: 0, y: 10 },
@@ -74,7 +77,7 @@ export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, acknowledg
       y: 0,
       transition: {
         duration: 0.4,
-        ease: [0.4, 0, 0.2, 1],
+        ease: [0.4, 0, 0.2, 1] as const,
         staggerChildren: 0.05
       }
     }
@@ -95,7 +98,7 @@ export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, acknowledg
             <button
               key={system.id}
               onClick={() => setActiveSystem(system.id)}
-              className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all ${
+              className={`px-6 h-11 inline-flex items-center rounded-xl text-xs font-black transition-all ${
                 isActive
                   ? 'bg-black text-white shadow-lg shadow-black/10'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -108,7 +111,7 @@ export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, acknowledg
       </div>
 
       <div className="space-y-6">
-        <FilterBar onFilterChange={setFilters} hideSystemFilter={true} />
+        <FilterBar onFilterChange={setFilters} hideSystemFilter={true} anomalyConfigs={anomalyConfigs} severityConfigs={severityConfigs} />
         
         <motion.div
           key={activeSystem}
@@ -130,6 +133,7 @@ export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, acknowledg
                   setShowLargeUnit={setShowLargeUnit} 
                   onAcknowledge={() => onAcknowledge(measurement.id)}
                   isSessionAck={acknowledgedIds.has(measurement.id)}
+                  displaySettings={displaySettings}
                 />
               </motion.div>
             ))

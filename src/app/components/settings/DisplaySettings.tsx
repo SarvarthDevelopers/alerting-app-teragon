@@ -9,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { motion } from 'motion/react';
 
 interface DisplaySettingsProps {
   onBack: () => void;
@@ -36,9 +35,7 @@ export function DisplaySettings({ onBack, settings: initialSettings, onUpdate }:
       </div>
 
       <div className="px-4 py-6 space-y-6 pb-24">
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
+        <div
           className="bg-card border border-border rounded-2xl p-6 space-y-8 shadow-sm hover:border-foreground transition-all duration-200"
         >
           {/* Latest Item Count */}
@@ -119,7 +116,7 @@ export function DisplaySettings({ onBack, settings: initialSettings, onUpdate }:
               />
             </div>
           </div>
-        </motion.div>
+        </div>
 
         <button 
           onClick={handleSave}

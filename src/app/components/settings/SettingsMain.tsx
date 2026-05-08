@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Info, Palette, Monitor, LogOut } from 'lucide-react';
 import { SettingsListItem } from './SettingsList';
 import { AnomalyTypesSettings } from './AnomalyTypesSettings';
 import { DisplaySettings } from './DisplaySettings';
 import { SeveritiesSettings } from './SeveritiesSettings';
+import { SavedToast } from '../ui/SavedToast';
 
 type SettingsScreen = 'main' | 'severities' | 'anomaly-types' | 'display';
 
@@ -34,6 +35,15 @@ export function SettingsMain({
   setDisplaySettings
 }: SettingsMainProps) {
   const [activeScreen, setActiveScreen] = useState<SettingsScreen>('main');
+  const [showToast, setShowToast] = useState(false);
+  const [isConfirmingLogout, setIsConfirmingLogout] = useState(false);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const triggerToast = () => {
+    clearTimeout(toastTimerRef.current);
+    setShowToast(true);
+    toastTimerRef.current = setTimeout(() => setShowToast(false), 2500);
+  };
 
   useEffect(() => {
     if (requestBack && requestBack > 0 && activeScreen !== 'main') {
@@ -49,31 +59,40 @@ export function SettingsMain({
 
   if (activeScreen === 'severities') {
     return (
-      <SeveritiesSettings 
-        onBack={() => handleScreenChange('main')} 
-        configs={severityConfigs}
-        onUpdate={setSeverityConfigs}
-      />
+      <>
+        <SeveritiesSettings 
+          onBack={() => handleScreenChange('main')} 
+          configs={severityConfigs}
+          onUpdate={(configs) => { setSeverityConfigs(configs); triggerToast(); }}
+        />
+        <SavedToast visible={showToast} />
+      </>
     );
   }
 
   if (activeScreen === 'anomaly-types') {
     return (
-      <AnomalyTypesSettings 
-        onBack={() => handleScreenChange('main')} 
-        configs={anomalyConfigs}
-        onUpdate={setAnomalyConfigs}
-      />
+      <>
+        <AnomalyTypesSettings 
+          onBack={() => handleScreenChange('main')} 
+          configs={anomalyConfigs}
+          onUpdate={(configs) => { setAnomalyConfigs(configs); triggerToast(); }}
+        />
+        <SavedToast visible={showToast} />
+      </>
     );
   }
 
   if (activeScreen === 'display') {
     return (
-      <DisplaySettings 
-        onBack={() => handleScreenChange('main')} 
-        settings={displaySettings}
-        onUpdate={setDisplaySettings}
-      />
+      <>
+        <DisplaySettings 
+          onBack={() => handleScreenChange('main')} 
+          settings={displaySettings}
+          onUpdate={(settings) => { setDisplaySettings(settings); triggerToast(); }}
+        />
+        <SavedToast visible={showToast} />
+      </>
     );
   }
 
@@ -111,12 +130,51 @@ export function SettingsMain({
         />
 
         <div className="pt-4">
-          <button 
-            className="w-full bg-background border border-foreground rounded-xl p-4 flex items-center justify-center font-bold text-foreground active:bg-muted/20 transition-colors"
-            onClick={() => console.log('Logging out...')}
+          {/* Confirmation question — slides in above via CSS grid */}
+          <div
+            style={{ display: 'grid', gridTemplateRows: isConfirmingLogout ? '1fr' : '0fr' }}
+            className="transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
           >
-            Log Out
+            <div className="overflow-hidden">
+              <p className="text-center text-sm font-medium text-foreground pb-3">
+                Are you sure you want to log out?
+              </p>
+            </div>
+          </div>
+
+          {/* Main button — morphs color and label in-place */}
+          <button
+            className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 ${
+              isConfirmingLogout
+                ? 'bg-red-500 text-white border border-red-500'
+                : 'bg-background border border-foreground text-foreground active:bg-muted/20'
+            }`}
+            onClick={() => {
+              if (!isConfirmingLogout) {
+                setIsConfirmingLogout(true);
+              } else {
+                console.log('Logging out...');
+                setIsConfirmingLogout(false);
+              }
+            }}
+          >
+            {isConfirmingLogout ? 'LOG OUT' : 'Log Out'}
           </button>
+
+          {/* Cancel button — slides in below via CSS grid */}
+          <div
+            style={{ display: 'grid', gridTemplateRows: isConfirmingLogout ? '1fr' : '0fr' }}
+            className="transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+          >
+            <div className="overflow-hidden">
+              <button
+                className="w-full mt-3 py-4 rounded-xl font-bold text-lg border-2 border-border text-foreground hover:bg-muted transition-colors"
+                onClick={() => setIsConfirmingLogout(false)}
+              >
+                CANCEL
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -125,6 +183,7 @@ export function SettingsMain({
           <span className="font-semibold text-foreground">Version 1.0.0</span> • Teragon Alerting System
         </p>
       </div>
+
     </div>
   );
 }

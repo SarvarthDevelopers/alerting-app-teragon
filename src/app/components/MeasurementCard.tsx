@@ -43,6 +43,8 @@ interface MeasurementCardProps {
   anomalyConfigs: AnomalyConfig[];
   severityConfigs: SeverityConfig[];
   displaySettings: DisplaySettingsType;
+  onAcknowledge?: (id: string) => void;
+  sessionAckInfo?: { acknowledgedBy: string; acknowledgedAt: string };
 }
 
 export function MeasurementCard({ 
@@ -50,7 +52,9 @@ export function MeasurementCard({
   forceCollapsed = false,
   anomalyConfigs,
   severityConfigs,
-  displaySettings
+  displaySettings,
+  onAcknowledge,
+  sessionAckInfo,
 }: MeasurementCardProps) {
   const hasAlerts = measurement.alerts.length > 0;
   const activeAlerts = measurement.alerts.filter(a => a.currentState === 'NEW');
@@ -60,6 +64,7 @@ export function MeasurementCard({
 
   const [isExpanded, setIsExpanded] = useState(forceCollapsed ? false : hasAlerts);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [isAcknowledging, setIsAcknowledging] = useState(false);
   const [showLargeUnit, setShowLargeUnit] = useState(true);
   const [scrubberPos, setScrubberPos] = useState<number | null>(null);
   const rulerRef = useRef<HTMLDivElement>(null);
@@ -139,8 +144,12 @@ export function MeasurementCard({
   };
 
   const handleAcknowledge = () => {
-    console.log('Acknowledge alerts for:', measurement.id);
     setShowConfirmation(false);
+    setIsAcknowledging(true);
+    // Brief green success flash before card exits
+    setTimeout(() => {
+      onAcknowledge?.(measurement.id);
+    }, 350);
   };
 
   const getSeverityColor = (severity: Severity): string => {
@@ -175,7 +184,7 @@ export function MeasurementCard({
 
           <div className="flex flex-col items-end gap-2">
             <div className="flex items-center gap-2">
-              {hasAcknowledgedAlerts && (
+              {(hasAcknowledgedAlerts || !!sessionAckInfo) && (
                 <span className="px-4 py-1 bg-[#dedede] text-foreground rounded text-xs font-semibold">
                   ACK
                 </span>
@@ -299,42 +308,46 @@ export function MeasurementCard({
                     );
                   })}
 
-                  {hasAcknowledgedAlerts && (
-                    <div className="text-sm font-medium text-alert-acknowledged">
-                      Ackd by {acknowledgedAlerts[0].acknowledgedBy || 'Unknown'} at{' '}
-                      {acknowledgedAlerts[0].acknowledgedAt && new Date(acknowledgedAlerts[0].acknowledgedAt).toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}{' '}
-                      on{' '}
-                      {acknowledgedAlerts[0].acknowledgedAt && new Date(acknowledgedAlerts[0].acknowledgedAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric'
-                      })}
-                    </div>
-                  )}
+                  {(() => {
+                    const ackData = sessionAckInfo
+                      ? sessionAckInfo
+                      : hasAcknowledgedAlerts
+                        ? { acknowledgedBy: acknowledgedAlerts[0].acknowledgedBy || 'Unknown', acknowledgedAt: acknowledgedAlerts[0].acknowledgedAt }
+                        : null;
+                    return ackData ? (
+                      <div className="text-sm font-medium text-alert-acknowledged">
+                        Ackd by {ackData.acknowledgedBy} at{' '}
+                        {ackData.acknowledgedAt && new Date(ackData.acknowledgedAt).toLocaleTimeString('en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}{' '}
+                        on{' '}
+                        {ackData.acknowledgedAt && new Date(ackData.acknowledgedAt).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
               )}
 
               {hasActiveAlerts && (
-                <div className="space-y-3">
-                  <AnimatePresence>
-                    {showConfirmation && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3, ease: 'easeOut' }}
-                        className="overflow-hidden"
-                      >
-                        <div className="text-center text-sm font-medium text-foreground py-2">
-                          Are you sure to acknowledge this?
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                <div>
+                  {/* Question — slides in above via CSS grid */}
+                  <div
+                    style={{ display: 'grid', gridTemplateRows: showConfirmation ? '1fr' : '0fr' }}
+                    className="transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  >
+                    <div className="overflow-hidden">
+                      <p className="text-center text-sm font-medium text-foreground pb-3">
+                        Are you sure to acknowledge this?
+                      </p>
+                    </div>
+                  </div>
 
+                  {/* Main button — label swaps, turns green on confirm */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -344,25 +357,32 @@ export function MeasurementCard({
                         handleAcknowledge();
                       }
                     }}
-                    className="w-full py-4 rounded-xl font-bold text-lg bg-[#dedede] text-foreground transition-all hover:opacity-90"
+                    className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 ${
+                      isAcknowledging
+                        ? 'bg-green-500 text-white'
+                        : 'bg-[#dedede] text-foreground hover:opacity-90'
+                    }`}
                   >
-                    {showConfirmation ? 'YES' : 'ACKNOWLEDGE'}
+                    {isAcknowledging ? '✓  DONE' : showConfirmation ? 'YES' : 'ACKNOWLEDGE'}
                   </button>
 
-                  {showConfirmation && (
-                    <motion.button
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, ease: 'easeOut' }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowConfirmation(false);
-                      }}
-                      className="w-full py-4 rounded-xl font-bold text-lg border-2 border-[#dedede] text-foreground transition-all hover:bg-muted"
-                    >
-                      CANCEL
-                    </motion.button>
-                  )}
+                  {/* Cancel button — slides in below via CSS grid */}
+                  <div
+                    style={{ display: 'grid', gridTemplateRows: showConfirmation ? '1fr' : '0fr' }}
+                    className="transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  >
+                    <div className="overflow-hidden">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowConfirmation(false);
+                        }}
+                        className="w-full mt-3 py-4 rounded-xl font-bold text-lg border-2 border-[#dedede] text-foreground transition-all hover:bg-muted"
+                      >
+                        CANCEL
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

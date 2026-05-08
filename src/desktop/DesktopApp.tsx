@@ -1,20 +1,46 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router';
 import { DesktopSidebar } from './components/DesktopSidebar';
 import { DesktopAlertsFeed } from './components/DesktopAlertsFeed';
 import { DesktopSystemsView } from './components/DesktopSystemsView';
-import { SettingsMain } from '../app/components/settings/SettingsMain';
+import { DesktopSettings } from './components/DesktopSettings';
 import { getAllActiveAlerts } from '../app/data/mockData';
+import {
+  severityConfigs as initialSeverityConfigs,
+  anomalyConfigs as initialAnomalyConfigs,
+  displaySettings as initialDisplaySettings,
+} from '../app/data/settingsData';
+import { AnomalyConfig, SeverityConfig, DisplaySettings } from '../app/types';
 import { motion, AnimatePresence } from 'motion/react';
 import { Bell, Activity, Settings, Search, User } from 'lucide-react';
 
 type Tab = 'alerts' | 'systems' | 'settings';
 
 export default function DesktopApp() {
-  const [activeTab, setActiveTab] = useState<Tab>('alerts');
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+
+  // Derive active tab from URL
+  const activeTab: Tab = pathname.startsWith('/desktop/systems') ? 'systems'
+    : pathname.startsWith('/desktop/settings') ? 'settings'
+    : 'alerts';
+
+  const navigateToTab = (tab: Tab) => navigate(`/desktop/${tab}`);
+
+  // Redirect bare /desktop → /desktop/alerts
+  useEffect(() => {
+    if (pathname === '/desktop' || pathname === '/desktop/') {
+      navigate('/desktop/alerts', { replace: true });
+    }
+  }, []);
+
   const [alertsView, setAlertsView] = useState<'active' | 'acknowledged'>('active');
   const [activeAlertsCount, setActiveAlertsCount] = useState(getAllActiveAlerts().length);
   const [showLargeUnit, setShowLargeUnit] = useState(true);
   const [acknowledgedIds, setAcknowledgedIds] = useState<Set<string>>(new Set());
+  const [severityConfigs, setSeverityConfigs] = useState<SeverityConfig[]>(initialSeverityConfigs);
+  const [anomalyConfigs, setAnomalyConfigs] = useState<AnomalyConfig[]>(initialAnomalyConfigs);
+  const [displaySettings, setDisplaySettings] = useState<DisplaySettings>(initialDisplaySettings);
 
   const handleAcknowledge = (id: string) => {
     setAcknowledgedIds(prev => new Set(prev).add(id));
@@ -26,6 +52,13 @@ export default function DesktopApp() {
     }, 5000);
     return () => clearInterval(interval);
   }, [acknowledgedIds]);
+
+  // Sync severity colors → CSS variables so badges/borders update in real time
+  useEffect(() => {
+    severityConfigs.forEach(config => {
+      document.documentElement.style.setProperty(`--severity-${config.id.toLowerCase()}`, config.color);
+    });
+  }, [severityConfigs]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -43,6 +76,9 @@ export default function DesktopApp() {
               onAcknowledge={handleAcknowledge}
               activeView={alertsView}
               setActiveView={setAlertsView}
+              displaySettings={displaySettings}
+              anomalyConfigs={anomalyConfigs}
+              severityConfigs={severityConfigs}
             />
           </div>
         );
@@ -58,17 +94,27 @@ export default function DesktopApp() {
               setShowLargeUnit={setShowLargeUnit} 
               acknowledgedIds={acknowledgedIds}
               onAcknowledge={handleAcknowledge}
+              displaySettings={displaySettings}
+              anomalyConfigs={anomalyConfigs}
+              severityConfigs={severityConfigs}
             />
           </div>
         );
       case 'settings':
         return (
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             <header className="mb-8">
-              <h2 className="text-3xl font-bold text-foreground">Global Settings</h2>
-              <p className="text-muted-foreground mt-1">Configure system thresholds and notification preferences.</p>
+              <h2 className="text-4xl font-black text-foreground tracking-tight">Settings</h2>
+              <p className="text-muted-foreground mt-2 font-medium">Configure system thresholds and alert preferences.</p>
             </header>
-            <SettingsMain />
+            <DesktopSettings
+              anomalyConfigs={anomalyConfigs}
+              setAnomalyConfigs={setAnomalyConfigs}
+              severityConfigs={severityConfigs}
+              setSeverityConfigs={setSeverityConfigs}
+              displaySettings={displaySettings}
+              setDisplaySettings={setDisplaySettings}
+            />
           </div>
         );
     }
@@ -78,7 +124,7 @@ export default function DesktopApp() {
     <div className="flex h-screen bg-muted/30 text-foreground font-sans">
       <DesktopSidebar 
         activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
+        setActiveTab={navigateToTab} 
         activeAlertsCount={activeAlertsCount} 
       />
       
@@ -97,7 +143,7 @@ export default function DesktopApp() {
             <motion.button 
               whileTap={{ scale: 0.95 }}
               onClick={() => {
-                setActiveTab('alerts');
+                navigate('/desktop/alerts');
                 setAlertsView('active');
               }}
               className="flex items-center gap-3 bg-primary text-black px-6 py-2.5 rounded-2xl shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all border border-primary/20 group cursor-pointer"
@@ -109,7 +155,7 @@ export default function DesktopApp() {
         </header>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 overflow-y-scroll custom-scrollbar">
           <div className="p-10">
             <AnimatePresence mode="wait">
               <motion.div

@@ -25,6 +25,16 @@ export function ActiveAlertsFeed({ anomalyConfigs, severityConfigs, displaySetti
     severities: [],
     timeSpan: null
   });
+  // Track session-acknowledged cards with who/when metadata
+  const [sessionAcked, setSessionAcked] = useState<Map<string, { acknowledgedBy: string; acknowledgedAt: string }>>(new Map());
+
+  const handleAcknowledge = (id: string) => {
+    setSessionAcked(prev => {
+      const next = new Map(prev);
+      next.set(id, { acknowledgedBy: 'You', acknowledgedAt: new Date().toISOString() });
+      return next;
+    });
+  };
 
   useEffect(() => {
     const activeAlerts = getAllActiveAlerts();
@@ -44,17 +54,16 @@ export function ActiveAlertsFeed({ anomalyConfigs, severityConfigs, displaySetti
 
   const filteredMeasurements = mockMeasurements
     .filter(m => {
+      const isSessionAcked = sessionAcked.has(m.id);
+      const isDataAcked = m.alerts.length > 0 && m.alerts.every(a => a.currentState === 'ACKNOWLEDGED');
+      const isAcked = isSessionAcked || isDataAcked;
+
       // Filter by alert state
       if (activeFilter === 'active') {
-        // Only show if ALL alerts are NEW (not mixed states)
-        if (!(m.alerts.length > 0 && m.alerts.every(a => a.currentState === 'NEW'))) {
-          return false;
-        }
+        if (isAcked || m.alerts.length === 0) return false;
+        if (!m.alerts.every(a => a.currentState === 'NEW')) return false;
       } else {
-        // Only show if ALL alerts are ACKNOWLEDGED (not mixed states)
-        if (!(m.alerts.length > 0 && m.alerts.every(a => a.currentState === 'ACKNOWLEDGED'))) {
-          return false;
-        }
+        if (!isAcked || m.alerts.length === 0) return false;
       }
 
       // Apply additional filters
@@ -194,17 +203,25 @@ export function ActiveAlertsFeed({ anomalyConfigs, severityConfigs, displaySetti
               )}
             </AnimatePresence>
 
-            {filteredMeasurements.map((measurement) => (
-              <motion.div layout key={measurement.id}>
-                <MeasurementCard
-                  measurement={measurement}
-                  forceCollapsed={activeFilter === 'acknowledged'}
-                  anomalyConfigs={anomalyConfigs}
-                  severityConfigs={severityConfigs}
-                  displaySettings={displaySettings}
-                />
-              </motion.div>
-            ))}
+            <AnimatePresence initial={false}>
+              {filteredMeasurements.map((measurement) => (
+                <motion.div
+                  layout
+                  key={measurement.id}
+                  exit={{ opacity: 0, x: 40, transition: { duration: 0.25, ease: [0.4, 0, 1, 1] } }}
+                >
+                  <MeasurementCard
+                    measurement={measurement}
+                    forceCollapsed={activeFilter === 'acknowledged'}
+                    anomalyConfigs={anomalyConfigs}
+                    severityConfigs={severityConfigs}
+                    displaySettings={displaySettings}
+                    onAcknowledge={handleAcknowledge}
+                    sessionAckInfo={sessionAcked.get(measurement.id)}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>

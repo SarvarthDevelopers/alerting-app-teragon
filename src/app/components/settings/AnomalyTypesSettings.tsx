@@ -39,11 +39,8 @@ export function AnomalyTypesSettings({ onBack, configs, onUpdate }: AnomalyTypes
 
       <div className="px-4 py-6 space-y-4">
         {configs.map((config, index) => (
-          <motion.div
+          <div
             key={config.id}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: index * 0.05 }}
             className="bg-card border border-border rounded-2xl p-6 space-y-6 shadow-sm hover:border-foreground transition-all duration-200"
           >
             {/* Card Header */}
@@ -85,7 +82,7 @@ export function AnomalyTypesSettings({ onBack, configs, onUpdate }: AnomalyTypes
                 </Select>
               </div>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
     </div>

@@ -1,11 +1,10 @@
 import { useState, useRef } from 'react';
-import { Measurement, Severity } from '../../app/types';
+import { Measurement, Severity, DisplaySettings } from '../../app/types';
 import { getAnomalyConfig, getSystemDisplayName } from '../../app/data/mockData';
-import { displaySettings } from '../../app/data/settingsData';
 import { SeverityBadge } from '../../app/components/AlertBadge';
 import { getRelativeTime, formatExpandedTime, getSeverityColor } from '../utils/formatters';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronRight, Maximize2, CheckCircle2, History, X } from 'lucide-react';
+import { CheckCircle2, History, X, Check } from 'lucide-react';
 
 interface DesktopAlertCardProps {
   measurement: Measurement;
@@ -13,6 +12,10 @@ interface DesktopAlertCardProps {
   setShowLargeUnit: (val: boolean) => void;
   onAcknowledge?: () => void;
   isSessionAck?: boolean;
+  displaySettings: DisplaySettings;
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
 }
 
 export function DesktopAlertCard({ 
@@ -20,7 +23,11 @@ export function DesktopAlertCard({
   showLargeUnit, 
   setShowLargeUnit,
   onAcknowledge,
-  isSessionAck 
+  isSessionAck,
+  displaySettings,
+  isSelectionMode = false,
+  isSelected = false,
+  onToggleSelect,
 }: DesktopAlertCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [scrubberPos, setScrubberPos] = useState<number | null>(null);
@@ -40,6 +47,7 @@ export function DesktopAlertCard({
     setTimeout(() => {
       onAcknowledge?.();
       setIsExpanded(false);
+      setIsResolving(false);
     }, 800);
   };
 
@@ -91,8 +99,15 @@ export function DesktopAlertCard({
         filter: 'blur(10px)',
         transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] }
       }}
-      className={`group bg-card border border-border/50 rounded-3xl overflow-hidden transition-all duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] hover:border-black relative ${
-        isExpanded ? 'ring-2 ring-black/5 border-black shadow-xl' : ''
+      onClick={() => { if (isSelectionMode) onToggleSelect?.(); }}
+      className={`group bg-card border rounded-3xl overflow-hidden transition-all duration-300 relative ${
+        isSelectionMode && isSelected
+          ? 'border-black ring-2 ring-black/10 shadow-lg cursor-pointer'
+          : isSelectionMode
+          ? 'border-border/50 hover:border-black/30 cursor-pointer'
+          : isExpanded
+          ? 'ring-2 ring-black/5 border-black shadow-xl'
+          : 'border-border/50 hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] hover:border-black'
       }`}
     >
       {/* Success Overlay */}
@@ -123,6 +138,42 @@ export function DesktopAlertCard({
       </AnimatePresence>
 
       <div className={`flex items-stretch ${hasAlerts ? 'min-h-[120px]' : 'min-h-[90px]'} ${isResolving ? 'blur-sm grayscale opacity-50' : ''} transition-all duration-500`}>
+
+        {/* Selection Rail */}
+        <AnimatePresence>
+          {isSelectionMode && (
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 48, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 38 }}
+              className="flex items-center justify-center border-r border-border/50 shrink-0 overflow-hidden"
+            >
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleSelect?.(); }}
+                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-150 ${
+                  isSelected
+                    ? 'bg-black border-black scale-110'
+                    : 'border-muted-foreground/40 group-hover:border-foreground'
+                }`}
+              >
+                <AnimatePresence>
+                  {isSelected && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      transition={{ duration: 0.12 }}
+                    >
+                      <Check size={11} className="text-white" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Left: Identity */}
         <div className={`w-64 p-6 border-r border-border/50 flex flex-col justify-center bg-muted/5 group-hover:bg-transparent transition-colors ${!hasAlerts ? 'py-4' : ''}`}>
           <div className="flex items-center gap-2 mb-1">

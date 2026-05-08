@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
-import { mockMeasurements } from '../../app/data/mockData';
+import { useState } from 'react';
+import { mockMeasurements, getAnomalyConfig, getSystemDisplayName } from '../../app/data/mockData';
+import { AnomalyConfig, SeverityConfig, DisplaySettings } from '../../app/types';
 import { DesktopAlertCard } from './DesktopAlertCard';
 import { FilterBar } from './FilterBar';
+import { BulkActionBar } from './BulkActionBar';
 import { motion, AnimatePresence } from 'motion/react';
 import { Bell } from 'lucide-react';
 
@@ -12,9 +14,12 @@ interface DesktopAlertsFeedProps {
   onAcknowledge: (id: string) => void;
   activeView: 'active' | 'acknowledged';
   setActiveView: (view: 'active' | 'acknowledged') => void;
+  displaySettings: DisplaySettings;
+  anomalyConfigs: AnomalyConfig[];
+  severityConfigs: SeverityConfig[];
 }
 
-export function DesktopAlertsFeed({ showLargeUnit, setShowLargeUnit, acknowledgedIds, onAcknowledge, activeView, setActiveView }: DesktopAlertsFeedProps) {
+export function DesktopAlertsFeed({ showLargeUnit, setShowLargeUnit, acknowledgedIds, onAcknowledge, activeView, setActiveView, displaySettings, anomalyConfigs, severityConfigs }: DesktopAlertsFeedProps) {
   const [filters, setFilters] = useState({
     system: 'All Systems',
     anomalyType: 'All Types',
@@ -22,6 +27,28 @@ export function DesktopAlertsFeed({ showLargeUnit, setShowLargeUnit, acknowledge
     time: 'Last 24 Hours',
     search: '',
   });
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkResolving, setIsBulkResolving] = useState(false);
+
+  const enterSelectionMode = () => { setIsSelectionMode(true); setSelectedIds(new Set()); };
+  const exitSelectionMode = () => { setIsSelectionMode(false); setSelectedIds(new Set()); setIsBulkResolving(false); };
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkAcknowledge = () => {
+    setIsBulkResolving(true);
+    setTimeout(() => {
+      selectedIds.forEach(id => onAcknowledge(id));
+      exitSelectionMode();
+    }, 1000);
+  };
 
   const filteredMeasurements = mockMeasurements.filter((m) => {
     // Logic for "Active" vs "Acknowledged" based on props
@@ -88,6 +115,17 @@ export function DesktopAlertsFeed({ showLargeUnit, setShowLargeUnit, acknowledge
     { id: 'acknowledged', label: 'Acknowledged' }
   ];
 
+  const activeFilteredIds = filteredMeasurements.map(m => m.id);
+  const allVisibleSelected = activeFilteredIds.length > 0 && activeFilteredIds.every(id => selectedIds.has(id));
+
+  const toggleSelectAll = () => {
+    if (allVisibleSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(activeFilteredIds));
+    }
+  };
+
   const containerVariants = {
     hidden: { opacity: 0, y: 10 },
     visible: {
@@ -95,7 +133,7 @@ export function DesktopAlertsFeed({ showLargeUnit, setShowLargeUnit, acknowledge
       y: 0,
       transition: {
         duration: 0.4,
-        ease: [0.4, 0, 0.2, 1],
+        ease: [0.4, 0, 0.2, 1] as const,
         staggerChildren: 0.05
       }
     }
@@ -109,14 +147,15 @@ export function DesktopAlertsFeed({ showLargeUnit, setShowLargeUnit, acknowledge
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-6">
-        <div className="bg-card/50 backdrop-blur-md border border-border/50 p-1.5 rounded-2xl inline-flex gap-1 shadow-sm self-start">
+        <div className="flex items-center justify-between gap-4">
+        <div className="bg-card/50 backdrop-blur-md border border-border/50 p-1.5 rounded-2xl inline-flex gap-1 shadow-sm">
           {views.map((view) => {
             const isActive = activeView === view.id;
             return (
               <button
                 key={view.id}
-                onClick={() => setActiveView(view.id)}
-                className={`px-8 py-2.5 rounded-xl text-xs font-black transition-all ${
+                onClick={() => { setActiveView(view.id); if (isSelectionMode) exitSelectionMode(); }}
+                className={`px-8 h-11 inline-flex items-center rounded-xl text-xs font-black transition-all ${
                   isActive
                     ? 'bg-black text-white shadow-lg shadow-black/10'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -127,7 +166,48 @@ export function DesktopAlertsFeed({ showLargeUnit, setShowLargeUnit, acknowledge
             );
           })}
         </div>
-        <FilterBar onFilterChange={setFilters} />
+
+        {/* Select Mode Controls — only on Active tab */}
+        <AnimatePresence>
+          {activeView === 'active' && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="flex items-center gap-2"
+            >
+              {/* Select All / Deselect All — visible only in selection mode */}
+              <AnimatePresence>
+                {isSelectionMode && (
+                  <motion.button
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: 'auto' }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                    onClick={toggleSelectAll}
+                    className="px-5 h-11 inline-flex items-center rounded-xl text-xs font-black transition-colors border border-border/50 bg-card/50 text-muted-foreground hover:text-foreground hover:border-foreground whitespace-nowrap overflow-hidden"
+                  >
+                    {allVisibleSelected ? 'Deselect All' : 'Select All'}
+                  </motion.button>
+                )}
+              </AnimatePresence>
+
+              {/* Select / Cancel toggle */}
+              <button
+                onClick={isSelectionMode ? exitSelectionMode : enterSelectionMode}
+                className={`px-5 h-11 inline-flex items-center rounded-xl text-xs font-black transition-all ${
+                  isSelectionMode
+                    ? 'bg-black text-white'
+                    : 'border border-border/50 bg-card/50 text-muted-foreground hover:text-foreground hover:border-foreground'
+                }`}
+              >
+                {isSelectionMode ? 'Cancel' : 'Select'}
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+        <FilterBar onFilterChange={setFilters} anomalyConfigs={anomalyConfigs} severityConfigs={severityConfigs} />
       </div>
 
       <motion.div
@@ -165,12 +245,23 @@ export function DesktopAlertsFeed({ showLargeUnit, setShowLargeUnit, acknowledge
                   setShowLargeUnit={setShowLargeUnit} 
                   onAcknowledge={() => onAcknowledge(measurement.id)}
                   isSessionAck={acknowledgedIds.has(measurement.id)}
+                  displaySettings={displaySettings}
+                  isSelectionMode={isSelectionMode}
+                  isSelected={selectedIds.has(measurement.id)}
+                  onToggleSelect={() => toggleSelection(measurement.id)}
                 />
               </motion.div>
             ))
           )}
         </AnimatePresence>
       </motion.div>
+
+      <BulkActionBar
+        selectedCount={selectedIds.size}
+        onAcknowledgeAll={handleBulkAcknowledge}
+        onCancel={exitSelectionMode}
+        isResolving={isBulkResolving}
+      />
     </div>
   );
 }
