@@ -49,7 +49,7 @@ export function Login({ onLogin, isDesktop = false }: LoginProps) {
         className="w-full max-w-[400px] flex flex-col"
       >
         <div className="flex flex-col items-center mb-6 md:mb-12 text-center">
-          <img src={logo} alt="Pulse By Teragon Logo" className="h-6 md:h-12 w-auto mb-6 md:mb-10" />
+          <img src={logo} alt="Pulse By Teragon Logo" className="h-6 md:h-12 w-auto mb-6 md:mb-10 ml-[-8px] md:ml-[-14px]" />
           <h1 className="text-2xl md:text-4xl font-bold text-foreground tracking-tight mb-1">Sign in</h1>
           <p className="text-muted-foreground font-medium text-sm md:text-lg">Use your work account to continue.</p>
         </div>
