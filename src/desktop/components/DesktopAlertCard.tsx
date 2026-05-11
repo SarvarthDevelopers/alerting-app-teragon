@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, memo } from 'react';
-import { Measurement, Severity, DisplaySettings } from '../../app/types';
+import { Measurement, Severity, DisplaySettings, AnomalyConfig } from '../../app/types';
 import { getAnomalyConfig, getSystemDisplayName } from '../../app/data/mockData';
 import { SeverityBadge } from '../../app/components/AlertBadge';
 import { getRelativeTime, formatExpandedTime, getSeverityColor } from '../utils/formatters';
@@ -20,6 +20,7 @@ interface DesktopAlertCardProps {
   onToggleSelect?: () => void;
   isExpanded?: boolean;
   onToggleExpand?: (expanded: boolean) => void;
+  anomalyConfigs: AnomalyConfig[];
 }
 
 export const DesktopAlertCard = memo(({ 
@@ -36,6 +37,7 @@ export const DesktopAlertCard = memo(({
   onToggleSelect,
   isExpanded: externalIsExpanded,
   onToggleExpand: externalOnToggleExpand,
+  anomalyConfigs,
 }: DesktopAlertCardProps) => {
   const [internalIsExpanded, setInternalIsExpanded] = useState(false);
   const isExpanded = externalIsExpanded !== undefined ? externalIsExpanded : internalIsExpanded;
@@ -106,8 +108,17 @@ export const DesktopAlertCard = memo(({
   };
 
   const hasAlerts = measurement.alerts.length > 0;
-  const activeAlerts = useMemo(() => measurement.alerts.filter(a => a.currentState === 'NEW'), [measurement.alerts]);
-  const isAcknowledged = useMemo(() => isSessionAck || measurement.alerts.every(a => a.currentState === 'ACKNOWLEDGED'), [isSessionAck, measurement.alerts]);
+  
+  // Filter alerts based on active anomaly types
+  const visibleAlerts = useMemo(() => {
+    return measurement.alerts.filter(alert => {
+      const config = anomalyConfigs.find(c => c.type === alert.anomalyType);
+      return config?.isActive !== false;
+    });
+  }, [measurement.alerts, anomalyConfigs]);
+
+  const activeAlerts = useMemo(() => visibleAlerts.filter(a => a.currentState === 'NEW'), [visibleAlerts]);
+  const isAcknowledged = useMemo(() => isSessionAck || visibleAlerts.every(a => a.currentState === 'ACKNOWLEDGED'), [isSessionAck, visibleAlerts]);
 
   const timestamp = useMemo(() => new Date(measurement.timestamp), [measurement.timestamp]);
   const isOlderThan24h = useMemo(() => (new Date().getTime() - timestamp.getTime()) > 86400000, [timestamp]);
@@ -317,7 +328,7 @@ export const DesktopAlertCard = memo(({
                     </div>
 
                     {/* Alerts / Anomalies */}
-                    {measurement.alerts.map((alert) => {
+                    {visibleAlerts.map((alert) => {
                       const startPercent = (alert.startPos / measurement.productLength) * 100;
                       const widthPercent = (alert.length / measurement.productLength) * 100;
                       const isSelected = selectedAlertId === alert.id;
@@ -376,13 +387,13 @@ export const DesktopAlertCard = memo(({
               <div className="flex flex-wrap items-center gap-2 mt-1">
                 {(() => {
                   const maxDisplay = 4;
-                  const displayedAlerts = measurement.alerts.slice(0, maxDisplay);
-                  const remainingCount = measurement.alerts.length - maxDisplay;
+                  const displayedAlerts = visibleAlerts.slice(0, maxDisplay);
+                  const remainingCount = visibleAlerts.length - maxDisplay;
 
                   return (
                     <>
                       {displayedAlerts.map((alert) => {
-                        const config = getAnomalyConfig(alert.anomalyType);
+                        const config = anomalyConfigs.find(c => c.type === alert.anomalyType);
                         const endPos = Math.min(alert.startPos + alert.length, measurement.productLength);
                         const isHovered = hoveredAlertId === alert.id;
                         const hasDetails = !!alert.technicalDetails;
@@ -418,7 +429,7 @@ export const DesktopAlertCard = memo(({
                               style={{ backgroundColor: getSeverityColor(alert.severity) }} 
                             />
                             <span className={`text-[10px] font-black tracking-tight ${isSelectedForDetail ? 'text-white' : 'text-foreground/80'}`}>
-                              {config?.displayName}
+                              {config?.displayName || alert.anomalyType}
                             </span>
                             <span className={`text-[10px] font-bold tabular-nums ${isSelectedForDetail ? 'text-white/60' : 'text-muted-foreground'}`}>
                               {alert.startPos.toFixed(2)} - {endPos.toFixed(2)}mm
@@ -444,7 +455,7 @@ export const DesktopAlertCard = memo(({
                             setIsExpanded(true);
                             setShowMoreShelf(true);
                             setShowAcknowledgeForm(false);
-                            const nextFoldAlerts = measurement.alerts.slice(4);
+                            const nextFoldAlerts = visibleAlerts.slice(4);
                             if (nextFoldAlerts.length > 0) {
                               setSelectedAlertId(nextFoldAlerts[0].id);
                             }
@@ -564,9 +575,9 @@ export const DesktopAlertCard = memo(({
                 onMouseMove={handleShelfMouseMove}
                 className="flex items-center gap-3 overflow-x-auto px-8 pt-3 pb-[5px] cursor-grab active:cursor-grabbing select-none -scale-y-100 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-black/10 hover:[&::-webkit-scrollbar-thumb]:bg-black/20 [&::-webkit-scrollbar-thumb]:rounded-full"
               >
-                {measurement.alerts.slice(4).map((alert) => {
+                {visibleAlerts.slice(4).map((alert) => {
                   const isSelected = selectedAlertId === alert.id;
-                  const config = getAnomalyConfig(alert.anomalyType);
+                  const config = anomalyConfigs.find(c => c.type === alert.anomalyType);
                   return (
                     <div key={alert.id} className="-scale-y-100 flex-none">
                       <motion.button
@@ -593,7 +604,7 @@ export const DesktopAlertCard = memo(({
                           style={{ backgroundColor: getSeverityColor(alert.severity) }} 
                         />
                         <span className={`text-[10px] font-black tracking-tight ${isSelected ? 'text-white' : 'text-foreground/80'}`}>
-                          {config?.displayName}
+                          {config?.displayName || alert.anomalyType}
                         </span>
                         <span className={`text-[10px] font-bold tabular-nums ${isSelected ? 'text-white/50' : 'text-muted-foreground'}`}>
                           {alert.startPos.toFixed(2)} - {Math.min(alert.startPos + alert.length, measurement.productLength).toFixed(2)}mm
@@ -633,7 +644,7 @@ export const DesktopAlertCard = memo(({
 
                       <div className="w-64 px-8 border-r border-border/40 h-full flex flex-col justify-center">
                         <span className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-1.5">
-                          {getAnomalyConfig(selectedAlert.anomalyType)?.displayName}
+                          {anomalyConfigs.find(c => c.type === selectedAlert.anomalyType)?.displayName || selectedAlert.anomalyType}
                         </span>
                         <span className="text-[11px] font-bold text-muted-foreground font-mono">
                           {selectedAlert.startPos.toFixed(2)} - {(selectedAlert.startPos + selectedAlert.length).toFixed(2)}mm
@@ -727,7 +738,7 @@ export const DesktopAlertCard = memo(({
                           Confirm Acknowledgment
                         </h4>
                         <p className="text-xs text-muted-foreground font-bold mt-1.5 leading-relaxed max-w-xl">
-                          Acknowledging these {measurement.alerts.length} anomalies will mark them as reviewed for production line tracking. This action is recorded under your supervisor profile.
+                          Acknowledging these {visibleAlerts.length} anomalies will mark them as reviewed for production line tracking. This action is recorded under your supervisor profile.
                         </p>
                       </div>
                     </div>

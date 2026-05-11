@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { SystemType, Measurement, AnomalyConfig, SeverityConfig, DisplaySettings as DisplaySettingsType } from '../types';
 import { getMeasurementsBySystem, getSystemDisplayName } from '../data/mockData';
 import { MeasurementCard } from './MeasurementCard';
 import { FilterDrawer, FilterOptions } from './FilterDrawer';
 import { motion, AnimatePresence } from 'motion/react';
 import { SlidersHorizontal } from 'lucide-react';
+import { enhanceMeasurements } from '../utils/dataUtils';
 
 interface SystemViewProps {
   system: SystemType;
@@ -24,11 +25,11 @@ export function SystemView({ system, anomalyConfigs, severityConfigs, displaySet
   });
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
-  const allMeasurements = getMeasurementsBySystem(system);
-  const displayName = getSystemDisplayName(system);
-
-  // Apply filters
-  const measurements = allMeasurements.filter(m => {
+  const measurements = useMemo(() => {
+    const rawData = getMeasurementsBySystem(system);
+    const enhancedData = enhanceMeasurements(rawData, anomalyConfigs);
+    
+    return enhancedData.filter(m => {
     // Time span filter
     if (filters.timeSpan !== null) {
       const measurementTime = new Date(m.timestamp);
@@ -65,11 +66,14 @@ export function SystemView({ system, anomalyConfigs, severityConfigs, displaySet
     });
     if (m.alerts.length > 0 && !hasActiveType) return false;
 
-    return true;
-  }).slice(0, displaySettings.latestNCount);
+      return true;
+    }).slice(0, displaySettings.latestNCount);
+  }, [system, filters, anomalyConfigs, displaySettings.latestNCount]);
 
-  const activeCount = measurements.filter(m =>
-    m.alerts.some(a => a.currentState === 'NEW' || a.currentState === 'ESCALATED')
+  const displayName = getSystemDisplayName(system);
+
+  const activeCount = measurements.filter((m: any) =>
+    m.alerts.some((a: any) => a.currentState === 'NEW' || a.currentState === 'ESCALATED')
   ).length;
 
   const hasActiveFilters = filters.anomalyTypes.length > 0 ||
@@ -133,7 +137,7 @@ export function SystemView({ system, anomalyConfigs, severityConfigs, displaySet
               transition={{ duration: 0.25, ease: "easeOut" }}
               className="space-y-4"
             >
-              {measurements.map((measurement) => (
+              {measurements.map((measurement: any) => (
                 <motion.div layout key={measurement.id}>
                   <MeasurementCard 
                     measurement={measurement} 
@@ -158,6 +162,8 @@ export function SystemView({ system, anomalyConfigs, severityConfigs, displaySet
         filters={filters}
         onApplyFilters={setFilters}
         showTimeSpan={true}
+        anomalyConfigs={anomalyConfigs}
+        severityConfigs={severityConfigs}
       />
     </div>
   );

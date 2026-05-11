@@ -4,6 +4,7 @@ import { MeasurementCard } from './MeasurementCard';
 import { FilterDrawer, FilterOptions } from './FilterDrawer';
 import { motion, AnimatePresence } from 'motion/react';
 import { Bell, SlidersHorizontal, RotateCcw } from 'lucide-react';
+import { enhanceMeasurements } from '../utils/dataUtils';
 import { SavedToast } from './ui/SavedToast';
 
 type AlertFilter = 'active' | 'acknowledged';
@@ -80,7 +81,9 @@ export function ActiveAlertsFeed({
   }, [alertCount]);
 
   const filteredMeasurements = useMemo(() => {
-    return mockMeasurements
+    const enhancedData = enhanceMeasurements(mockMeasurements, anomalyConfigs);
+    
+    return enhancedData
     .filter(m => {
       const isSessionAcked = sessionAcked.has(m.id);
       const isDataAcked = m.alerts.length > 0 && m.alerts.every(a => a.currentState === 'ACKNOWLEDGED');
@@ -277,6 +280,8 @@ export function ActiveAlertsFeed({
         filters={filters}
         onApplyFilters={applyFilters}
         showTimeSpan={true}
+        anomalyConfigs={anomalyConfigs}
+        severityConfigs={severityConfigs}
       />
     </div>
   );

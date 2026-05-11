@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Check } from 'lucide-react';
-import { Severity } from '../types';
-import { anomalyConfigs } from '../data/settingsData';
+import { Severity, AnomalyConfig, SeverityConfig } from '../types';
 
 export interface FilterOptions {
   anomalyTypes: string[];
@@ -16,6 +15,8 @@ interface FilterDrawerProps {
   filters: FilterOptions;
   onApplyFilters: (filters: FilterOptions) => void;
   showTimeSpan?: boolean;
+  anomalyConfigs: AnomalyConfig[];
+  severityConfigs: SeverityConfig[];
 }
 
 const severityOptions: Severity[] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
@@ -26,7 +27,7 @@ const timeSpanOptions = [
   { label: 'All', value: null }
 ];
 
-export function FilterDrawer({ isOpen, onClose, filters, onApplyFilters, showTimeSpan = true }: FilterDrawerProps) {
+export function FilterDrawer({ isOpen, onClose, filters, onApplyFilters, showTimeSpan = true, anomalyConfigs, severityConfigs }: FilterDrawerProps) {
   const [localFilters, setLocalFilters] = useState<FilterOptions>(filters);
 
   const toggleAnomalyType = (type: string) => {
@@ -70,12 +71,7 @@ export function FilterDrawer({ isOpen, onClose, filters, onApplyFilters, showTim
   };
 
   const getSeverityColor = (severity: Severity): string => {
-    switch (severity) {
-      case 'CRITICAL': return '#dc2626';
-      case 'HIGH': return '#f97316';
-      case 'MEDIUM': return '#eab308';
-      case 'LOW': return '#3b82f6';
-    }
+    return `var(--severity-${severity.toLowerCase()})`;
   };
 
   return (
@@ -114,7 +110,7 @@ export function FilterDrawer({ isOpen, onClose, filters, onApplyFilters, showTim
               <div>
                 <h3 className="font-semibold text-foreground mb-3">Anomaly Type</h3>
                 <div className="space-y-2">
-                  {anomalyConfigs.map(config => (
+                  {anomalyConfigs.filter(c => c.isActive).map(config => (
                     <button
                       key={config.id}
                       onClick={() => toggleAnomalyType(config.sourceTypeKey)}

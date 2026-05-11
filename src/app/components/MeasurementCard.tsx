@@ -70,6 +70,14 @@ export const MeasurementCard = memo(({
   const acknowledgedAlerts = useMemo(() => measurement.alerts.filter(a => a.currentState === 'ACKNOWLEDGED'), [measurement.alerts]);
   const hasAcknowledgedAlerts = acknowledgedAlerts.length > 0;
 
+  // Filter alerts based on active anomaly types
+  const visibleAlerts = useMemo(() => {
+    return measurement.alerts.filter(alert => {
+      const config = anomalyConfigs.find(c => c.type === alert.anomalyType);
+      return config?.isActive !== false;
+    });
+  }, [measurement.alerts, anomalyConfigs]);
+
   const [internalIsExpanded, setInternalIsExpanded] = useState(forceCollapsed ? false : hasAlerts);
   const isExpanded = externalIsExpanded !== undefined ? externalIsExpanded : internalIsExpanded;
   const setIsExpanded = (val: boolean) => {
@@ -277,8 +285,8 @@ export const MeasurementCard = memo(({
                     ))}
                   </div>
 
-                  {/* Anomaly bars */}
-                  {measurement.alerts.map(alert => {
+                   {/* Anomaly bars */}
+                  {visibleAlerts.map(alert => {
                     const startPercent = (alert.startPos / measurement.productLength) * 100;
                     const widthPercent = (alert.length / measurement.productLength) * 100;
                     const hasDetails = !!alert.technicalDetails;
@@ -324,8 +332,8 @@ export const MeasurementCard = memo(({
                 <div className="space-y-2 mb-4">
                   {(() => {
                     const maxDisplay = 3;
-                    const displayedAlerts = showMoreAlerts ? measurement.alerts : measurement.alerts.slice(0, maxDisplay);
-                    const remainingCount = measurement.alerts.length - maxDisplay;
+                    const displayedAlerts = showMoreAlerts ? visibleAlerts : visibleAlerts.slice(0, maxDisplay);
+                    const remainingCount = visibleAlerts.length - maxDisplay;
 
                     return (
                       <>
@@ -363,7 +371,6 @@ export const MeasurementCard = memo(({
                                   </span>
                                 </div>
                               </div>
-
                               <AnimatePresence>
                                 {isSelected && (
                                   <motion.div
@@ -496,7 +503,7 @@ export const MeasurementCard = memo(({
             className="relative h-4 w-full bg-card border-t border-[#dedede] overflow-hidden"
           >
             <div className="absolute inset-0">
-              {measurement.alerts.map(alert => {
+              {visibleAlerts.map(alert => {
                 const startPercent = (alert.startPos / measurement.productLength) * 100;
                 const widthPercent = (alert.length / measurement.productLength) * 100;
 

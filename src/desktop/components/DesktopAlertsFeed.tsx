@@ -6,6 +6,7 @@ import { FilterBar } from './FilterBar';
 import { BulkActionBar } from './BulkActionBar';
 import { motion, AnimatePresence } from 'motion/react';
 import { Bell } from 'lucide-react';
+import { enhanceMeasurements } from '../../app/utils/dataUtils';
 
 interface DesktopAlertsFeedProps {
   showLargeUnit: boolean;
@@ -72,7 +73,9 @@ export function DesktopAlertsFeed({
   };
 
   const filteredMeasurements = useMemo(() => {
-    return mockMeasurements.filter((m) => {
+    const enhancedData = enhanceMeasurements(mockMeasurements, anomalyConfigs);
+    
+    return enhancedData.filter((m) => {
       // Logic for "Active" vs "Acknowledged" based on props
       const isAck = acknowledgedIds.has(m.id) || m.alerts.every(a => a.currentState === 'ACKNOWLEDGED');
       
@@ -104,6 +107,16 @@ export function DesktopAlertsFeed({
         if (!matchesBasic && !matchesAnomalies) return false;
       }
 
+      // Filter by active anomaly types in global settings
+      // If a measurement has alerts, at least one alert must belong to an active anomaly type
+      if (m.alerts.length > 0) {
+        const hasActiveType = m.alerts.some(alert => {
+          const config = anomalyConfigs.find(c => c.type === alert.anomalyType);
+          return config?.isActive !== false;
+        });
+        if (!hasActiveType) return false;
+      }
+
       // Filter by System (Category Dropdown)
       if (filters.system !== 'All Systems') {
         const systemMap: { [key: string]: string } = {
@@ -131,7 +144,7 @@ export function DesktopAlertsFeed({
 
       return true;
     });
-  }, [acknowledgedIds, activeView, filters]);
+  }, [acknowledgedIds, activeView, filters, anomalyConfigs]);
 
   const views: { id: 'active' | 'acknowledged'; label: string }[] = [
     { id: 'active', label: 'Active Alerts' },
@@ -289,6 +302,7 @@ export function DesktopAlertsFeed({
                   onToggleSelect={() => toggleSelection(measurement.id)}
                   isExpanded={expandedCardId === measurement.id}
                   onToggleExpand={(expanded) => setExpandedCardId(expanded ? measurement.id : null)}
+                  anomalyConfigs={anomalyConfigs}
                 />
               </motion.div>
             ))

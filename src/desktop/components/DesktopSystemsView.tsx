@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { SystemType, AnomalyConfig, SeverityConfig, DisplaySettings } from '../../app/types';
 import { getMeasurementsBySystem, getSystemDisplayName, getAnomalyConfig } from '../../app/data/mockData';
 import { DesktopAlertCard } from './DesktopAlertCard';
 import { FilterBar } from './FilterBar';
 import { motion, AnimatePresence } from 'motion/react';
+import { enhanceMeasurements } from '../../app/utils/dataUtils';
 
 interface DesktopSystemsViewProps {
   showLargeUnit: boolean;
@@ -40,7 +41,11 @@ export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, showExactT
     { id: 'FLATNESS_MEASUREMENT', label: 'Flatness Measurement' }
   ];
 
-  const measurements = getMeasurementsBySystem(activeSystem).filter(m => {
+  const measurements = useMemo(() => {
+    const rawData = getMeasurementsBySystem(activeSystem);
+    const enhancedData = enhanceMeasurements(rawData, anomalyConfigs);
+    
+    return enhancedData.filter(m => {
     // Enhanced Search Filter
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
@@ -76,8 +81,19 @@ export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, showExactT
       const hasMatchingSeverity = m.alerts.some(a => a.severity.toLowerCase() === filters.severity.toLowerCase());
       if (!hasMatchingSeverity) return false;
     }
-    return true;
-  }).slice(0, displaySettings.latestNCount);
+
+    // Filter by active anomaly types in global settings
+    if (m.alerts.length > 0) {
+      const hasActiveType = m.alerts.some(alert => {
+        const config = anomalyConfigs.find(c => c.type === alert.anomalyType);
+        return config?.isActive !== false;
+      });
+      if (!hasActiveType) return false;
+    }
+
+      return true;
+    }).slice(0, displaySettings.latestNCount);
+  }, [activeSystem, filters, anomalyConfigs, displaySettings.latestNCount]);
 
   const containerVariants = {
     hidden: { opacity: 0, y: 10 },
@@ -147,7 +163,7 @@ export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, showExactT
               No measurements found for this system.
             </div>
           ) : (
-            measurements.map((measurement) => (
+            measurements.map((measurement: any) => (
               <motion.div key={measurement.id} variants={itemVariants}>
                 <DesktopAlertCard 
                   measurement={measurement} 
@@ -160,6 +176,7 @@ export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, showExactT
                   displaySettings={displaySettings}
                   isExpanded={expandedCardId === measurement.id}
                   onToggleExpand={(expanded) => setExpandedCardId(expanded ? measurement.id : null)}
+                  anomalyConfigs={anomalyConfigs}
                 />
               </motion.div>
             ))
