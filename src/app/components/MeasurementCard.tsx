@@ -364,7 +364,7 @@ export function MeasurementCard({
                                     {config?.displayName || alert.anomalyType}:
                                   </span>
                                   <span className="text-muted-foreground ml-1 font-mono">
-                                    {alert.startPos.toLocaleString()} - {endPos.toLocaleString()} mm
+                                    {alert.startPos.toFixed(2)} - {endPos.toFixed(2)} mm
                                   </span>
                                 </div>
                               </div>
