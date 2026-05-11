@@ -34,12 +34,6 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
 
   const navigateToTab = (tab: Tab) => navigate(`/desktop/${tab}`);
 
-  // Redirect bare /desktop → /desktop/alerts
-  useEffect(() => {
-    if (pathname === '/desktop' || pathname === '/desktop/') {
-      navigate('/desktop/alerts', { replace: true });
-    }
-  }, []);
 
   const [alertsView, setAlertsView] = useState<'active' | 'acknowledged'>('active');
   const [showLargeUnit, setShowLargeUnit] = useState(() => localStorage.getItem('desktop_showLargeUnit') !== 'false');
@@ -63,6 +57,19 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [toast, setToast] = useState<{ visible: boolean; message: string }>({ visible: false, message: '' });
   const toastTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Reset header state and scroll position on navigation
+  useEffect(() => {
+    setShowHeader(true);
+    setLastScrollY(0);
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+    
+    if (pathname === '/desktop' || pathname === '/desktop/') {
+      navigate('/desktop/alerts', { replace: true });
+    }
+  }, [pathname, navigate]);
 
   const triggerToast = (message: string) => {
     clearTimeout(toastTimerRef.current);
