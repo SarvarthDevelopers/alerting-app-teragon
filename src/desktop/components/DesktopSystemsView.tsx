@@ -149,5 +149,6 @@ export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, showExactT
           )}
         </motion.div>
       </div>
-    );
+    </div>
+  );
 }
