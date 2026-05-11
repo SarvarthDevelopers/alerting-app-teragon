@@ -269,7 +269,7 @@ export const DesktopAlertCard = memo(({
           {!hasAlerts ? (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
+                <div className="w-1.5 h-1.5 rounded-full bg-severity-ok shadow-[0_0_8px_var(--severity-ok)]" />
                 <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Product Quality Verified</span>
               </div>
               <button 
@@ -479,9 +479,9 @@ export const DesktopAlertCard = memo(({
                 <SeverityBadge severity={measurement.alerts[0].severity} size="sm" />
               </div>
             ) : (
-              <div className="flex items-center gap-2 mt-1 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">OK</span>
-                <CheckCircle2 size={14} className="text-emerald-500" />
+              <div className="flex items-center gap-2 mt-1 bg-severity-ok/10 px-3 py-1 rounded-full border border-severity-ok/20">
+                <span className="text-[10px] font-black text-severity-ok uppercase tracking-widest">OK</span>
+                <CheckCircle2 size={14} className="text-severity-ok" />
               </div>
             )}
           </div>

@@ -141,8 +141,8 @@ export const MeasurementCard = memo(({
   }, [measurement.alerts, hasAlerts]);
 
   const statusColor = useMemo(() => {
-    if (!hasAlerts) return '#9fe870';
-    return highestSeverity ? `var(--severity-${highestSeverity.toLowerCase()})` : '#9fe870';
+    if (!hasAlerts) return 'var(--severity-ok)';
+    return highestSeverity ? `var(--severity-${highestSeverity.toLowerCase()})` : 'var(--severity-ok)';
   }, [hasAlerts, highestSeverity]);
 
   const borderColor = useMemo(() => {
@@ -210,7 +210,7 @@ export const MeasurementCard = memo(({
               {highestSeverity ? (
                 <SeverityBadge severity={highestSeverity} size="sm" />
               ) : (
-                <div className="w-[18px] h-[18px] bg-[#34c759] rounded-full" />
+                <div className="w-[18px] h-[18px] bg-severity-ok rounded-full" />
               )}
               {isExpanded ? (
                 <ChevronUp size={24} className="text-foreground" />

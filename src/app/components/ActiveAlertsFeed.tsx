@@ -16,9 +16,19 @@ interface ActiveAlertsFeedProps {
   displaySettings: DisplaySettingsType;
   showLargeUnit: boolean;
   setShowLargeUnit: (val: boolean) => void;
+  sessionAcked: Map<string, { acknowledgedBy: string; acknowledgedAt: string }>;
+  onAcknowledge: (id: string) => void;
 }
 
-export function ActiveAlertsFeed({ anomalyConfigs, severityConfigs, displaySettings, showLargeUnit, setShowLargeUnit }: ActiveAlertsFeedProps) {
+export function ActiveAlertsFeed({ 
+  anomalyConfigs, 
+  severityConfigs, 
+  displaySettings, 
+  showLargeUnit, 
+  setShowLargeUnit,
+  sessionAcked,
+  onAcknowledge
+}: ActiveAlertsFeedProps) {
   const [activeFilter, setActiveFilter] = useState<AlertFilter>('active');
   const [alertCount, setAlertCount] = useState(0);
   const [hasNewAlert, setHasNewAlert] = useState(false);
@@ -30,17 +40,8 @@ export function ActiveAlertsFeed({ anomalyConfigs, severityConfigs, displaySetti
     severities: [],
     timeSpan: null
   });
-  // Track session-acknowledged cards with who/when metadata
-  const [sessionAcked, setSessionAcked] = useState<Map<string, { acknowledgedBy: string; acknowledgedAt: string }>>(new Map());
-  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
-  const handleAcknowledge = (id: string) => {
-    setSessionAcked(prev => {
-      const next = new Map(prev);
-      next.set(id, { acknowledgedBy: 'You', acknowledgedAt: new Date().toISOString() });
-      return next;
-    });
-  };
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
   const applyFilters = (newFilters: FilterOptions) => {
     setFilters(newFilters);
@@ -143,7 +144,7 @@ export function ActiveAlertsFeed({ anomalyConfigs, severityConfigs, displaySetti
   return (
     <div>
       <div className="sticky top-0 bg-background z-20 -mx-4 px-4 pt-2 pb-4">
-        <div className="flex items-center gap-3">
+        <div className="flex items-stretch gap-3 h-14">
           <div className="bg-white rounded-xl p-2 flex gap-2.5 flex-1 relative">
             {tabFilters.map((filter) => {
               const isActive = activeFilter === filter.id;
@@ -152,7 +153,7 @@ export function ActiveAlertsFeed({ anomalyConfigs, severityConfigs, displaySetti
                 <button
                   key={filter.id}
                   onClick={() => setActiveFilter(filter.id)}
-                  className={`flex-1 px-4 py-2 rounded-xl font-semibold text-base transition-colors relative z-10 ${
+                  className={`flex-1 px-4 py-2 rounded-xl font-semibold text-base transition-colors relative z-10 flex items-center justify-center ${
                     isActive
                       ? 'text-white'
                       : 'text-[#838383] hover:text-[#525252]'
@@ -172,7 +173,7 @@ export function ActiveAlertsFeed({ anomalyConfigs, severityConfigs, displaySetti
           </div>
           <button
             onClick={() => setFilterDrawerOpen(true)}
-            className={`p-2.5 rounded-xl transition-all shrink-0 ${
+            className={`w-14 rounded-xl transition-all shrink-0 flex items-center justify-center ${
               hasActiveFilters
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-white text-foreground hover:bg-muted/70'
@@ -254,7 +255,7 @@ export function ActiveAlertsFeed({ anomalyConfigs, severityConfigs, displaySetti
                     anomalyConfigs={anomalyConfigs}
                     severityConfigs={severityConfigs}
                     displaySettings={displaySettings}
-                    onAcknowledge={handleAcknowledge}
+                    onAcknowledge={onAcknowledge}
                     sessionAckInfo={sessionAcked.get(measurement.id)}
                     isExpanded={expandedCardId === measurement.id}
                     onToggleExpand={(expanded) => setExpandedCardId(expanded ? measurement.id : null)}

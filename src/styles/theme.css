@@ -40,6 +40,7 @@
   --severity-high: #f97316;
   --severity-medium: #eab308;
   --severity-low: #3b82f6;
+  --severity-ok: #10b981;
 }
 
 .dark {
@@ -81,6 +82,7 @@
   --severity-high: #fb923c;
   --severity-medium: #fde047;
   --severity-low: #60a5fa;
+  --severity-ok: #34d399;
 }
 
 @theme inline {
@@ -124,6 +126,7 @@
   --color-severity-high: var(--severity-high);
   --color-severity-medium: var(--severity-medium);
   --color-severity-low: var(--severity-low);
+  --color-severity-ok: var(--severity-ok);
 }
 
 @layer base {

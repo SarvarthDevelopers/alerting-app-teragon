@@ -34,6 +34,19 @@ export default function App({ onLogout }: AppProps) {
   const [severityConfigs, setSeverityConfigs] = useState<SeverityConfig[]>(initialSeverityConfigs);
   const [displaySettings, setDisplaySettings] = useState<DisplaySettingsType>(initialDisplaySettings);
   const [showLargeUnit, setShowLargeUnit] = useState(() => localStorage.getItem('mobile_showLargeUnit') !== 'false');
+  const [sessionAcked, setSessionAcked] = useState<Map<string, { acknowledgedBy: string; acknowledgedAt: string }>>(new Map());
+
+  const handleAcknowledge = (id: string) => {
+    setSessionAcked(prev => {
+      const next = new Map(prev);
+      next.set(id, { acknowledgedBy: 'You', acknowledgedAt: new Date().toISOString() });
+      return next;
+    });
+  };
+
+  const handleResetAppState = () => {
+    setSessionAcked(new Map());
+  };
 
   useEffect(() => {
     localStorage.setItem('mobile_showLargeUnit', showLargeUnit.toString());
@@ -45,6 +58,10 @@ export default function App({ onLogout }: AppProps) {
       const finalColor = getAccessibleColor(config.color, displaySettings.colorBlindMode);
       document.documentElement.style.setProperty(`--severity-${config.id.toLowerCase()}`, finalColor);
     });
+    
+    // Sync OK status color
+    const okColor = getAccessibleColor('#10b981', displaySettings.colorBlindMode);
+    document.documentElement.style.setProperty('--severity-ok', okColor);
   }, [severityConfigs, displaySettings.colorBlindMode]);
 
   useEffect(() => {
@@ -194,6 +211,7 @@ export default function App({ onLogout }: AppProps) {
               displaySettings={displaySettings}
               setDisplaySettings={setDisplaySettings}
               onLogout={onLogout}
+              onResetApp={handleResetAppState}
             />
           ) : (
             <div className="max-w-7xl mx-auto px-4">
@@ -204,6 +222,8 @@ export default function App({ onLogout }: AppProps) {
                   displaySettings={displaySettings}
                   showLargeUnit={showLargeUnit}
                   setShowLargeUnit={setShowLargeUnit}
+                  sessionAcked={sessionAcked}
+                  onAcknowledge={handleAcknowledge}
                 />
               )}
               {activeTab === 'systems' && (

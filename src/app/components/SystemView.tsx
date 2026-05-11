@@ -83,11 +83,11 @@ export function SystemView({ system, anomalyConfigs, severityConfigs, displaySet
         animate={{ opacity: 1, y: 0 }}
         className="mb-4 pb-3 border-b border-border"
       >
-        <div className="flex items-start justify-between mb-2">
+        <div className="flex items-center justify-between mb-2 h-14">
           <h2 className="text-2xl font-bold text-foreground">{displayName}</h2>
           <button
             onClick={() => setFilterDrawerOpen(true)}
-            className={`p-2.5 rounded-xl transition-all ${
+            className={`w-14 h-14 rounded-xl transition-all flex items-center justify-center shrink-0 ${
               hasActiveFilters
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-muted text-foreground hover:bg-muted/70'

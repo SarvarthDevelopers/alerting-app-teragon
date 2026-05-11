@@ -135,6 +135,10 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
       const finalColor = getAccessibleColor(config.color, displaySettings.colorBlindMode);
       document.documentElement.style.setProperty(`--severity-${config.id.toLowerCase()}`, finalColor);
     });
+
+    // Sync OK status color
+    const okColor = getAccessibleColor('#10b981', displaySettings.colorBlindMode);
+    document.documentElement.style.setProperty('--severity-ok', okColor);
   }, [severityConfigs, displaySettings.colorBlindMode]);
 
   const renderContent = () => {

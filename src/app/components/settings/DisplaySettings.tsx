@@ -1,5 +1,3 @@
-import { useState } from 'react';
-import { displaySettings as defaultSettings } from '../../data/settingsData';
 import { DisplaySettings as DisplaySettingsType, UnitSystem } from '../../types';
 import { Switch } from '../ui/switch';
 import {
@@ -14,14 +12,12 @@ interface DisplaySettingsProps {
   onBack: () => void;
   settings: DisplaySettingsType;
   onUpdate: (settings: DisplaySettingsType) => void;
+  onResetApp: () => void;
 }
 
-export function DisplaySettings({ onBack, settings: initialSettings, onUpdate }: DisplaySettingsProps) {
-  const [settings, setSettings] = useState<DisplaySettingsType>(initialSettings);
-
-  const handleSave = () => {
-    onUpdate(settings);
-    onBack();
+export function DisplaySettings({ settings, onUpdate, onResetApp }: DisplaySettingsProps) {
+  const updateSetting = <K extends keyof DisplaySettingsType>(key: K, value: DisplaySettingsType[K]) => {
+    onUpdate({ ...settings, [key]: value });
   };
 
   return (
@@ -34,61 +30,69 @@ export function DisplaySettings({ onBack, settings: initialSettings, onUpdate }:
         </p>
       </div>
 
-      <div className="px-4 py-6 space-y-6 pb-24">
-        <div
-          className="bg-card border border-border rounded-2xl p-6 space-y-8 shadow-sm hover:border-foreground transition-all duration-200"
-        >
-          {/* Latest Item Count */}
-          <div className="space-y-3">
-            <div>
-              <label className="text-lg font-bold text-foreground block">
-                Latest Item Count
-              </label>
-              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                Number of recent measurements to display in each system view
-              </p>
+      <div className="px-4 py-6 space-y-4 pb-32">
+        {/* Card 1: Monitoring Preferences */}
+        <div className="bg-card border border-border rounded-2xl p-6 space-y-8 shadow-sm hover:border-foreground transition-all duration-200">
+          <div className="space-y-6">
+            {/* Latest Item Count */}
+            <div className="space-y-3">
+              <div>
+                <label className="text-lg font-bold text-foreground block">
+                  Latest Item Count
+                </label>
+                <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                  Number of recent measurements to display
+                </p>
+              </div>
+              <input
+                type="number"
+                value={settings.latestNCount}
+                onChange={(e) => updateSetting('latestNCount', parseInt(e.target.value) || 0)}
+                min="5"
+                max="100"
+                className="w-full px-4 h-14 bg-background border border-border rounded-xl text-foreground font-bold text-lg focus:outline-none focus:border-primary transition-colors"
+              />
             </div>
-            <input
-              type="number"
-              value={settings.latestNCount}
-              onChange={(e) => setSettings({ ...settings, latestNCount: parseInt(e.target.value) || 0 })}
-              min="5"
-              max="100"
-              className="w-full px-4 h-14 bg-background border border-border rounded-xl text-foreground font-bold text-lg focus:outline-none focus:border-primary transition-colors"
-            />
-          </div>
 
-          {/* Polling Interval */}
-          <div className="space-y-3">
-            <div>
-              <label className="text-lg font-bold text-foreground block">
-                Polling Interval (seconds)
-              </label>
-              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                How often to check for new measurements
-              </p>
+            {/* Polling Interval */}
+            <div className="space-y-3">
+              <div>
+                <label className="text-lg font-bold text-foreground block">
+                  Polling Interval (seconds)
+                </label>
+                <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                  How often to check for new measurements
+                </p>
+              </div>
+              <input
+                type="number"
+                value={settings.pollingInterval}
+                onChange={(e) => updateSetting('pollingInterval', parseInt(e.target.value) || 0)}
+                min="1"
+                max="60"
+                className="w-full px-4 h-14 bg-background border border-border rounded-xl text-foreground font-bold text-lg focus:outline-none focus:border-primary transition-colors"
+              />
             </div>
-            <input
-              type="number"
-              value={settings.pollingInterval}
-              onChange={(e) => setSettings({ ...settings, pollingInterval: parseInt(e.target.value) || 0 })}
-              min="1"
-              max="60"
-              className="w-full px-4 h-14 bg-background border border-border rounded-xl text-foreground font-bold text-lg focus:outline-none focus:border-primary transition-colors"
-            />
           </div>
+        </div>
 
-          {/* Unit System */}
+        {/* Card 2: Measurement Units */}
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:border-foreground transition-all duration-200">
           <div className="flex items-center justify-between gap-4">
-            <label className="text-lg font-bold text-foreground whitespace-nowrap">
-              Unit System
-            </label>
-            <div className="w-[200px]">
+            <div className="flex-1">
+              <label className="text-lg font-bold text-foreground block">
+                Unit System
+              </label>
+              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                Metric or Imperial measurements
+              </p>
+            </div>
+            <div className="w-[220px]">
               <Select
                 value={settings.unitSystem}
-                onValueChange={(val) => setSettings({ ...settings, unitSystem: val as UnitSystem })}
+                onValueChange={(val) => updateSetting('unitSystem', val as UnitSystem)}
               >
-                <SelectTrigger className="h-14 bg-background border-border rounded-xl px-4 font-bold text-foreground">
+                <SelectTrigger className="w-full h-14 bg-background border-border rounded-xl px-4 font-bold text-foreground">
                   <SelectValue placeholder="Select unit" />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border rounded-xl">
@@ -98,9 +102,11 @@ export function DisplaySettings({ onBack, settings: initialSettings, onUpdate }:
               </Select>
             </div>
           </div>
+        </div>
 
-          {/* Screen Wake Lock */}
-          <div className="flex items-start justify-between gap-4 pt-2 border-t border-border/50">
+        {/* Card 3: System Behavior */}
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:border-foreground transition-all duration-200">
+          <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <label className="text-lg font-bold text-foreground block">
                 Screen Wake Lock
@@ -112,13 +118,15 @@ export function DisplaySettings({ onBack, settings: initialSettings, onUpdate }:
             <div className="pt-1">
               <Switch 
                 checked={settings.screenWakeLock}
-                onCheckedChange={() => setSettings({ ...settings, screenWakeLock: !settings.screenWakeLock })}
+                onCheckedChange={(val) => updateSetting('screenWakeLock', val)}
               />
             </div>
           </div>
+        </div>
 
-          {/* Accessibility */}
-          <div className="flex items-start justify-between gap-4 pt-6 border-t border-border/50">
+        {/* Card 4: Accessibility */}
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:border-foreground transition-all duration-200">
+          <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <label className="text-lg font-bold text-foreground block">
                 Color Blind Safe Mode
@@ -130,22 +138,31 @@ export function DisplaySettings({ onBack, settings: initialSettings, onUpdate }:
             <div className="pt-1">
               <Switch 
                 checked={settings.colorBlindMode}
-                onCheckedChange={(val) => {
-                  const newSettings = { ...settings, colorBlindMode: val };
-                  setSettings(newSettings);
-                  onUpdate(newSettings); // Trigger immediate update for accessibility mode
-                }}
+                onCheckedChange={(val) => updateSetting('colorBlindMode', val)}
               />
             </div>
           </div>
         </div>
 
-        <button 
-          onClick={handleSave}
-          className="w-full h-16 bg-[#1a1a1a] text-white rounded-2xl font-bold text-lg shadow-lg active:scale-[0.98] transition-transform uppercase tracking-wider"
-        >
-          Save Changes
-        </button>
+        {/* Card 5: Demo Controls */}
+        <div className="bg-red-50/50 border border-red-100 rounded-2xl p-6 shadow-sm hover:border-red-200 transition-all duration-200">
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-black text-red-900 block uppercase tracking-widest">
+                Developer / Mock Data Controls
+              </label>
+              <p className="text-xs text-red-700/70 mt-1 leading-relaxed">
+                Reset local mock application state to factory defaults. This clears all session-based acknowledgments for this demo environment.
+              </p>
+            </div>
+            <button 
+              onClick={onResetApp}
+              className="w-full h-14 bg-red-600 text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-lg shadow-red-600/20 active:scale-[0.98] transition-all"
+            >
+              Reset Mock App State
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

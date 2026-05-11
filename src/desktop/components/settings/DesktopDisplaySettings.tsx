@@ -141,17 +141,17 @@ export function DesktopDisplaySettings({ settings, onUpdate, onResetApp }: Deskt
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <Label className="text-sm font-bold text-red-900 block uppercase tracking-widest">
-                Developer / Demo Controls
+                Developer / Mock Data Controls
               </Label>
               <p className="text-xs text-red-700/70 leading-relaxed">
-                Restore application to factory default state. This clears all session acknowledgments.
+                Reset local mock application state to factory defaults. This clears all session-based acknowledgments for this demo environment.
               </p>
             </div>
             <button 
               onClick={onResetApp}
               className="h-12 px-8 rounded-xl bg-red-600 text-white text-[11px] font-black uppercase tracking-widest hover:bg-red-700 shadow-lg shadow-red-600/20 transition-all hover:-translate-y-0.5 active:translate-y-0"
             >
-              Reset App State
+              Reset Mock App State
             </button>
           </div>
         </div>

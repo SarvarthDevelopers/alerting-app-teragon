@@ -22,6 +22,7 @@ interface SettingsMainProps {
   displaySettings: DisplaySettingsType;
   setDisplaySettings: (settings: DisplaySettingsType) => void;
   onLogout: () => void;
+  onResetApp: () => void;
 }
 
 export function SettingsMain({ 
@@ -34,7 +35,8 @@ export function SettingsMain({
   setSeverityConfigs,
   displaySettings,
   setDisplaySettings,
-  onLogout
+  onLogout,
+  onResetApp
 }: SettingsMainProps) {
   const [activeScreen, setActiveScreen] = useState<SettingsScreen>('main');
   const [showToast, setShowToast] = useState(false);
@@ -92,6 +94,7 @@ export function SettingsMain({
           onBack={() => handleScreenChange('main')} 
           settings={displaySettings}
           onUpdate={(settings) => { setDisplaySettings(settings); triggerToast(); }}
+          onResetApp={() => { onResetApp(); triggerToast(); }}
         />
         <SavedToast visible={showToast} />
       </>
@@ -144,36 +147,34 @@ export function SettingsMain({
             </div>
           </div>
 
-          {/* Main button — morphs color and label in-place */}
+          {/* Main button — becomes CANCEL in confirmation mode */}
           <button
-            className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 ${
-              isConfirmingLogout
-                ? 'bg-red-500 text-white border border-red-500'
-                : 'bg-background border border-foreground text-foreground active:bg-muted/20'
-            }`}
+            className="w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 bg-background border border-foreground text-foreground active:bg-muted/20"
             onClick={() => {
               if (!isConfirmingLogout) {
                 setIsConfirmingLogout(true);
               } else {
-                onLogout();
                 setIsConfirmingLogout(false);
               }
             }}
           >
-            {isConfirmingLogout ? 'LOG OUT' : 'Log Out'}
+            {isConfirmingLogout ? 'CANCEL' : 'Log Out'}
           </button>
 
-          {/* Cancel button — slides in below via CSS grid */}
+          {/* Confirm Logout button — slides in below via CSS grid */}
           <div
             style={{ display: 'grid', gridTemplateRows: isConfirmingLogout ? '1fr' : '0fr' }}
             className="transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
           >
             <div className="overflow-hidden">
               <button
-                className="w-full mt-3 py-4 rounded-xl font-bold text-lg border-2 border-border text-foreground hover:bg-muted transition-colors"
-                onClick={() => setIsConfirmingLogout(false)}
+                className="w-full mt-3 py-4 rounded-xl font-bold text-lg bg-red-500 text-white border border-red-500 shadow-lg shadow-red-500/20 active:scale-[0.98] transition-all"
+                onClick={() => {
+                  onLogout();
+                  setIsConfirmingLogout(false);
+                }}
               >
-                CANCEL
+                LOG OUT
               </button>
             </div>
           </div>
