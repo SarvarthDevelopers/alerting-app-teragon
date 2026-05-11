@@ -69,7 +69,8 @@ export const displaySettings: DisplaySettings = {
   latestNCount: 25,
   pollingInterval: 2,
   screenWakeLock: true,
-  unitSystem: 'METRIC'
+  unitSystem: 'METRIC',
+  colorBlindMode: false
 };
 
 export const networkConfig: NetworkConfig = {
@@ -91,7 +92,8 @@ export const users: User[] = [
     fullName: 'John Smith',
     role: 'OPERATOR',
     isActive: true,
-    forcePinChange: false,
+    forcePasswordChange: false,
+    password: 'password123',
     createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
   },
   {
@@ -100,7 +102,8 @@ export const users: User[] = [
     fullName: 'Sarah Jones',
     role: 'OPERATOR',
     isActive: true,
-    forcePinChange: false,
+    forcePasswordChange: false,
+    password: 'password123',
     createdAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString()
   },
   {
@@ -109,7 +112,8 @@ export const users: User[] = [
     fullName: 'Mike Davis',
     role: 'LEAD',
     isActive: true,
-    forcePinChange: false,
+    forcePasswordChange: false,
+    password: 'password123',
     createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString()
   },
   {
@@ -118,7 +122,8 @@ export const users: User[] = [
     fullName: 'Admin User',
     role: 'ADMIN',
     isActive: true,
-    forcePinChange: false,
+    forcePasswordChange: false,
+    password: 'password123',
     createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
   }
 ];

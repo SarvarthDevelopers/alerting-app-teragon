@@ -67,13 +67,6 @@ export function DesktopSidebar({ activeTab, setActiveTab, activeAlertsCount, onL
       </div>
 
       <div className="mt-auto p-6 space-y-4">
-        <div className="p-4 bg-muted/50 rounded-2xl border border-border/50">
-          <p className="text-[10px] font-black text-muted-foreground mb-3 uppercase tracking-widest">System Health</p>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-            <span className="text-xs font-bold text-foreground">OPERATIONAL</span>
-          </div>
-        </div>
 
         <div className="p-4 bg-card border border-border/50 rounded-3xl shadow-sm space-y-4">
           <div className="flex items-center gap-3">

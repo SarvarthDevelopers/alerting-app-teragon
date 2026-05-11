@@ -79,6 +79,7 @@ export interface DisplaySettings {
   pollingInterval: number;
   screenWakeLock: boolean;
   unitSystem: UnitSystem;
+  colorBlindMode: boolean;
 }
 
 export interface NetworkConfig {
@@ -99,6 +100,7 @@ export interface User {
   fullName: string;
   role: UserRole;
   isActive: boolean;
-  forcePinChange: boolean;
+  forcePasswordChange: boolean;
+  password?: string;
   createdAt: string;
 }

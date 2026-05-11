@@ -239,7 +239,7 @@ export function MeasurementCard({
             transition={{ duration: 0.3 }}
             className="overflow-hidden"
           >
-            <div className={`px-4 pt-0 border-t border-border ${hasActiveAlerts ? 'pb-5' : 'pb-0'}`}>
+            <div className={`px-4 pt-0 border-t border-border ${hasAlerts ? 'pb-5' : 'pb-0'}`}>
               <div className="flex items-center justify-between mb-2 mt-4">
                 <div className="text-sm text-muted-foreground font-semibold">
                   {measurement.productType}

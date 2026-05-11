@@ -25,7 +25,7 @@ const DEFAULT_FILTERS = {
   search: '',
 };
 
-const TRIGGER_CLASS = 'h-11 w-auto rounded-xl border-border/50 bg-card text-xs font-bold gap-1.5 px-3';
+const TRIGGER_CLASS = 'h-11 w-auto rounded-xl border-border/50 bg-card text-xs font-bold gap-1.5 px-3 focus-visible:ring-4 focus-visible:ring-black/5 focus-visible:border-black transition-all outline-none';
 
 export function FilterBar({ onFilterChange, hideSystemFilter, anomalyConfigs, severityConfigs }: FilterBarProps) {
   const [selectedFilters, setSelectedFilters] = useState(DEFAULT_FILTERS);

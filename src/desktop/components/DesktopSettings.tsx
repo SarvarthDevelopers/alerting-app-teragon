@@ -1,14 +1,15 @@
 import { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router';
-import { Palette, Zap, Monitor } from 'lucide-react';
+import { Palette, Zap, Monitor, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SeveritiesSettings } from '../../app/components/settings/SeveritiesSettings';
 import { AnomalyTypesSettings } from '../../app/components/settings/AnomalyTypesSettings';
-import { DisplaySettings } from '../../app/components/settings/DisplaySettings';
+import { DesktopDisplaySettings } from './settings/DesktopDisplaySettings';
+import { DesktopUserManagement } from './settings/DesktopUserManagement';
 import { SavedToast } from '../../app/components/ui/SavedToast';
-import { AnomalyConfig, SeverityConfig, DisplaySettings as DisplaySettingsType } from '../../app/types';
+import { AnomalyConfig, SeverityConfig, DisplaySettings as DisplaySettingsType, User } from '../../app/types';
 
-type SettingsSection = 'severities' | 'anomaly-types' | 'display';
+type SettingsSection = 'severities' | 'anomaly-types' | 'display' | 'user-management';
 
 interface DesktopSettingsProps {
   anomalyConfigs: AnomalyConfig[];
@@ -17,18 +18,22 @@ interface DesktopSettingsProps {
   setSeverityConfigs: (c: SeverityConfig[]) => void;
   displaySettings: DisplaySettingsType;
   setDisplaySettings: (s: DisplaySettingsType) => void;
+  users: User[];
+  setUsers: (u: User[]) => void;
 }
 
 const NAV_ITEMS: { id: SettingsSection; label: string; icon: React.ElementType }[] = [
   { id: 'severities',    label: 'Severities',           icon: Palette },
   { id: 'anomaly-types', label: 'Anomaly Types',         icon: Zap     },
   { id: 'display',       label: 'Display & Preferences', icon: Monitor },
+  { id: 'user-management', label: 'User Management',       icon: Users   },
 ];
 
 export function DesktopSettings({
   anomalyConfigs, setAnomalyConfigs,
   severityConfigs, setSeverityConfigs,
   displaySettings, setDisplaySettings,
+  users, setUsers,
 }: DesktopSettingsProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -36,6 +41,7 @@ export function DesktopSettings({
   // Derive active section from URL
   const activeSection: SettingsSection = pathname.includes('/anomaly-types') ? 'anomaly-types'
     : pathname.includes('/display') ? 'display'
+    : pathname.includes('/user-management') ? 'user-management'
     : 'severities';
 
   const setActiveSection = (section: SettingsSection) =>
@@ -111,10 +117,16 @@ export function DesktopSettings({
             )}
 
             {activeSection === 'display' && (
-              <DisplaySettings
-                onBack={() => {}}
+              <DesktopDisplaySettings
                 settings={displaySettings}
                 onUpdate={(settings) => { setDisplaySettings(settings); triggerToast(); }}
+              />
+            )}
+            
+            {activeSection === 'user-management' && (
+              <DesktopUserManagement
+                users={users}
+                setUsers={(u) => { setUsers(u); triggerToast(); }}
               />
             )}
           </motion.div>

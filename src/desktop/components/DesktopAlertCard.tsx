@@ -522,7 +522,7 @@ export function DesktopAlertCard({
                         setSelectedAlertId(null);
                       }
                     }}
-                    className={`mt-2 w-full flex items-center justify-center gap-2 py-3.5 rounded-[20px] text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-500 ${
+                    className={`mt-2 w-full flex items-center justify-center gap-2 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-500 ${
                       isAcknowledged
                         ? 'bg-[#0071e3]/10 text-[#0071e3] border border-[#0071e3]/10 hover:bg-[#0071e3]/20'
                         : (isExpanded && showAcknowledgeForm)

@@ -16,7 +16,8 @@ export function UserManagement({ onBack }: UserManagementProps) {
     fullName: '',
     role: 'OPERATOR',
     isActive: true,
-    forcePinChange: true
+    forcePasswordChange: true,
+    password: ''
   });
 
   const addUser = () => {
@@ -29,7 +30,8 @@ export function UserManagement({ onBack }: UserManagementProps) {
           fullName: newUser.fullName,
           role: newUser.role as UserRole,
           isActive: newUser.isActive!,
-          forcePinChange: newUser.forcePinChange!,
+          forcePasswordChange: newUser.forcePasswordChange!,
+          password: newUser.password,
           createdAt: new Date().toISOString()
         }
       ]);
@@ -38,7 +40,8 @@ export function UserManagement({ onBack }: UserManagementProps) {
         fullName: '',
         role: 'OPERATOR',
         isActive: true,
-        forcePinChange: true
+        forcePasswordChange: true,
+        password: ''
       });
       setShowAddUser(false);
     }
@@ -136,6 +139,19 @@ export function UserManagement({ onBack }: UserManagementProps) {
 
                 <div>
                   <label className="text-sm font-medium text-foreground mb-2 block">
+                    Initial Password
+                  </label>
+                  <input
+                    type="password"
+                    value={newUser.password}
+                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                    placeholder="••••••••"
+                    className="w-full h-12 bg-muted/40 border border-border rounded-xl px-4 font-mono text-sm focus:outline-none focus:border-primary transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">
                     Role
                   </label>
                   <div className="grid grid-cols-3 gap-2">
@@ -156,16 +172,16 @@ export function UserManagement({ onBack }: UserManagementProps) {
                 </div>
 
                 <div className="flex items-center justify-between py-2">
-                  <span className="text-sm font-medium text-foreground">Force PIN Change</span>
+                  <span className="text-sm font-medium text-foreground">Force Password Change</span>
                   <button
-                    onClick={() => setNewUser({ ...newUser, forcePinChange: !newUser.forcePinChange })}
+                    onClick={() => setNewUser({ ...newUser, forcePasswordChange: !newUser.forcePasswordChange })}
                     className={`w-12 h-6 rounded-full transition-all relative ${
-                      newUser.forcePinChange ? 'bg-primary' : 'bg-muted'
+                      newUser.forcePasswordChange ? 'bg-primary' : 'bg-muted'
                     }`}
                   >
                     <div
                       className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all ${
-                        newUser.forcePinChange ? 'right-0.5' : 'left-0.5'
+                        newUser.forcePasswordChange ? 'right-0.5' : 'left-0.5'
                       }`}
                     />
                   </button>

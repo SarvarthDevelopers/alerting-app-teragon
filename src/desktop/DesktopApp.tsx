@@ -10,9 +10,11 @@ import {
   anomalyConfigs as initialAnomalyConfigs,
   displaySettings as initialDisplaySettings,
 } from '../app/data/settingsData';
-import { AnomalyConfig, SeverityConfig, DisplaySettings } from '../app/types';
+import { AnomalyConfig, SeverityConfig, DisplaySettings, User } from '../app/types';
+import { users as initialUsers } from '../app/data/settingsData';
 import { motion, AnimatePresence } from 'motion/react';
-import { Bell, Activity, Settings, Search, User } from 'lucide-react';
+import { Bell, Activity, Settings, Search, User as UserIcon } from 'lucide-react';
+import { getAccessibleColor } from '../app/utils/colorUtils';
 
 type Tab = 'alerts' | 'systems' | 'settings';
 
@@ -54,6 +56,7 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
   const [severityConfigs, setSeverityConfigs] = useState<SeverityConfig[]>(initialSeverityConfigs);
   const [anomalyConfigs, setAnomalyConfigs] = useState<AnomalyConfig[]>(initialAnomalyConfigs);
   const [displaySettings, setDisplaySettings] = useState<DisplaySettings>(initialDisplaySettings);
+  const [users, setUsers] = useState<User[]>(initialUsers);
 
   const handleAcknowledge = (id: string) => {
     setAcknowledgedIds(prev => new Set(prev).add(id));
@@ -66,12 +69,14 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
     return () => clearInterval(interval);
   }, [acknowledgedIds]);
 
+
   // Sync severity colors → CSS variables so badges/borders update in real time
   useEffect(() => {
     severityConfigs.forEach(config => {
-      document.documentElement.style.setProperty(`--severity-${config.id.toLowerCase()}`, config.color);
+      const finalColor = getAccessibleColor(config.color, displaySettings.colorBlindMode);
+      document.documentElement.style.setProperty(`--severity-${config.id.toLowerCase()}`, finalColor);
     });
-  }, [severityConfigs]);
+  }, [severityConfigs, displaySettings.colorBlindMode]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -131,6 +136,8 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
               setSeverityConfigs={setSeverityConfigs}
               displaySettings={displaySettings}
               setDisplaySettings={setDisplaySettings}
+              users={users}
+              setUsers={setUsers}
             />
           </div>
         );
@@ -153,8 +160,13 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
 
         {/* Top Header */}
         <header className="h-20 bg-background/60 backdrop-blur-md border-b border-border/50 flex items-center justify-between px-10 shrink-0 z-40">
-          <div className="flex items-center">
+          <div className="flex items-center gap-6">
              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">anomaly alerting system</span>
+             <div className="h-4 w-px bg-border/50" />
+             <div className="flex items-center gap-2">
+               <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+               <span className="text-[10px] font-black text-foreground uppercase tracking-widest opacity-60">Operational</span>
+             </div>
           </div>
           
           <div className="flex items-center gap-4">

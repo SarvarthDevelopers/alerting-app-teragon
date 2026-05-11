@@ -116,6 +116,28 @@ export function DisplaySettings({ onBack, settings: initialSettings, onUpdate }:
               />
             </div>
           </div>
+
+          {/* Accessibility */}
+          <div className="flex items-start justify-between gap-4 pt-6 border-t border-border/50">
+            <div className="flex-1">
+              <label className="text-lg font-bold text-foreground block">
+                Color Blind Safe Mode
+              </label>
+              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                High-contrast, accessible palette (Okabe-Ito)
+              </p>
+            </div>
+            <div className="pt-1">
+              <Switch 
+                checked={settings.colorBlindMode}
+                onCheckedChange={(val) => {
+                  const newSettings = { ...settings, colorBlindMode: val };
+                  setSettings(newSettings);
+                  onUpdate(newSettings); // Trigger immediate update for accessibility mode
+                }}
+              />
+            </div>
+          </div>
         </div>
 
         <button 

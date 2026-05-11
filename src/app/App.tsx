@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, Bell, Activity, Settings } from 'lucide-react';
+import { getAccessibleColor } from './utils/colorUtils';
 import { ActiveAlertsFeed } from './components/ActiveAlertsFeed';
 import { SystemsView } from './components/SystemsView';
 import { SettingsMain } from './components/settings/SettingsMain';
@@ -41,9 +42,10 @@ export default function App({ onLogout }: AppProps) {
   // Sync CSS variables with severity colors
   useEffect(() => {
     severityConfigs.forEach(config => {
-      document.documentElement.style.setProperty(`--severity-${config.id.toLowerCase()}`, config.color);
+      const finalColor = getAccessibleColor(config.color, displaySettings.colorBlindMode);
+      document.documentElement.style.setProperty(`--severity-${config.id.toLowerCase()}`, finalColor);
     });
-  }, [severityConfigs]);
+  }, [severityConfigs, displaySettings.colorBlindMode]);
 
   useEffect(() => {
     if (mainRef.current) {
