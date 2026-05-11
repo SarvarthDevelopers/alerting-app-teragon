@@ -93,31 +93,30 @@ export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, showExactT
 
   return (
     <div className="space-y-8">
-      <div className="sticky top-0 z-30 bg-muted/30 backdrop-blur-md py-6 -mx-10 px-10 border-b border-border/50 shadow-2xl shadow-black/5 -mt-10 mb-8">
-        <div className="space-y-6">
-          {/* System Selector Tabs */}
-          <div className="bg-card/50 backdrop-blur-md border border-border/50 p-1.5 rounded-2xl inline-flex gap-1 shadow-sm">
-            {systems.map((system) => {
-              const isActive = activeSystem === system.id;
-              return (
-                <button
-                  key={system.id}
-                  onClick={() => setActiveSystem(system.id)}
-                  className={`px-6 h-11 inline-flex items-center rounded-xl text-xs font-black transition-all ${
-                    isActive
-                      ? 'bg-black text-white shadow-lg shadow-black/10'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                  }`}
-                >
-                  {system.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <FilterBar onFilterChange={setFilters} hideSystemFilter={true} anomalyConfigs={anomalyConfigs} severityConfigs={severityConfigs} />
+      <div className="sticky top-0 z-30 bg-background py-6 -mx-10 px-10 border-b border-border shadow-xl shadow-black/5 -mt-10">
+        {/* System Selector Tabs */}
+        <div className="bg-muted border border-border/50 p-1.5 rounded-2xl inline-flex gap-1 shadow-sm">
+          {systems.map((system) => {
+            const isActive = activeSystem === system.id;
+            return (
+              <button
+                key={system.id}
+                onClick={() => setActiveSystem(system.id)}
+                className={`px-6 h-11 inline-flex items-center rounded-xl text-xs font-black transition-all ${
+                  isActive
+                    ? 'bg-black text-white shadow-lg shadow-black/10'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`}
+              >
+                {system.label}
+              </button>
+            );
+          })}
         </div>
       </div>
+
+      <div className="space-y-6">
+        <FilterBar onFilterChange={setFilters} hideSystemFilter={true} anomalyConfigs={anomalyConfigs} severityConfigs={severityConfigs} />
         
         <motion.div
           key={activeSystem}
