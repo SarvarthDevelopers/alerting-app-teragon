@@ -127,10 +127,10 @@ export default function App({ onLogout }: AppProps) {
           transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
           className="absolute top-0 left-0 right-0 bg-card border-b border-border z-50 shrink-0"
         >
-          <div className="px-4 py-4">
+          <div className="px-4 py-3">
             <div className="max-w-7xl mx-auto">
-              <div className="flex items-center justify-between h-10">
-                <div className="relative w-[160px] h-8 shrink-0">
+              <div className="flex items-center justify-between h-12">
+                <div className="relative w-[180px] h-10 shrink-0">
                   <AnimatePresence initial={false}>
                     {isSettingsSubView ? (
                       <motion.button
@@ -154,7 +154,7 @@ export default function App({ onLogout }: AppProps) {
                         transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
                         className="absolute inset-0 flex items-center"
                       >
-                        <img src={logo} alt="Teragon Logo" className="h-8 w-auto" />
+                        <img src={logo} alt="Teragon Logo" className="h-10 w-auto" />
                       </motion.div>
                     )}
                   </AnimatePresence>

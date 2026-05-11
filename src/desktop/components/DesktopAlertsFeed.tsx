@@ -149,68 +149,70 @@ export function DesktopAlertsFeed({ showLargeUnit, setShowLargeUnit, showExactTi
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between gap-4">
-        <div className="bg-card/50 backdrop-blur-md border border-border/50 p-1.5 rounded-2xl inline-flex gap-1 shadow-sm">
-          {views.map((view) => {
-            const isActive = activeView === view.id;
-            return (
-              <button
-                key={view.id}
-                onClick={() => { setActiveView(view.id); if (isSelectionMode) exitSelectionMode(); }}
-                className={`px-8 h-11 inline-flex items-center rounded-xl text-xs font-black transition-all ${
-                  isActive
-                    ? 'bg-black text-white shadow-lg shadow-black/10'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                }`}
-              >
-                {view.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Select Mode Controls — only on Active tab */}
-        <AnimatePresence>
-          {activeView === 'active' && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="flex items-center gap-2"
-            >
-              {/* Select All / Deselect All — visible only in selection mode */}
-              <AnimatePresence>
-                {isSelectionMode && (
-                  <motion.button
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: 'auto' }}
-                    exit={{ opacity: 0, width: 0 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-                    onClick={toggleSelectAll}
-                    className="px-5 h-11 inline-flex items-center rounded-xl text-xs font-black transition-colors border border-border/50 bg-card/50 text-muted-foreground hover:text-foreground hover:border-foreground whitespace-nowrap overflow-hidden"
+      <div className="sticky top-0 z-30 bg-muted/30 backdrop-blur-md py-6 -mx-10 px-10 border-b border-border/50 shadow-2xl shadow-black/5 -mt-10 mb-8">
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="bg-card/50 backdrop-blur-md border border-border/50 p-1.5 rounded-2xl inline-flex gap-1 shadow-sm">
+              {views.map((view) => {
+                const isActive = activeView === view.id;
+                return (
+                  <button
+                    key={view.id}
+                    onClick={() => { setActiveView(view.id); if (isSelectionMode) exitSelectionMode(); }}
+                    className={`px-8 h-11 inline-flex items-center rounded-xl text-xs font-black transition-all ${
+                      isActive
+                        ? 'bg-black text-white shadow-lg shadow-black/10'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    }`}
                   >
-                    {allVisibleSelected ? 'Deselect All' : 'Select All'}
-                  </motion.button>
-                )}
-              </AnimatePresence>
+                    {view.label}
+                  </button>
+                );
+              })}
+            </div>
 
-              {/* Select / Cancel toggle */}
-              <button
-                onClick={isSelectionMode ? exitSelectionMode : enterSelectionMode}
-                className={`px-5 h-11 inline-flex items-center rounded-xl text-xs font-black transition-all ${
-                  isSelectionMode
-                    ? 'bg-black text-white'
-                    : 'border border-border/50 bg-card/50 text-muted-foreground hover:text-foreground hover:border-foreground'
-                }`}
-              >
-                {isSelectionMode ? 'Cancel' : 'Select'}
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-        <FilterBar onFilterChange={setFilters} anomalyConfigs={anomalyConfigs} severityConfigs={severityConfigs} />
+            {/* Select Mode Controls — only on Active tab */}
+            <AnimatePresence>
+              {activeView === 'active' && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="flex items-center gap-2"
+                >
+                  {/* Select All / Deselect All — visible only in selection mode */}
+                  <AnimatePresence>
+                    {isSelectionMode && (
+                      <motion.button
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: 'auto' }}
+                        exit={{ opacity: 0, width: 0 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                        onClick={toggleSelectAll}
+                        className="px-5 h-11 inline-flex items-center rounded-xl text-xs font-black transition-colors border border-border/50 bg-card/50 text-muted-foreground hover:text-foreground hover:border-foreground whitespace-nowrap overflow-hidden"
+                      >
+                        {allVisibleSelected ? 'Deselect All' : 'Select All'}
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Select / Cancel toggle */}
+                  <button
+                    onClick={isSelectionMode ? exitSelectionMode : enterSelectionMode}
+                    className={`px-5 h-11 inline-flex items-center rounded-xl text-xs font-black transition-all ${
+                      isSelectionMode
+                        ? 'bg-black text-white'
+                        : 'border border-border/50 bg-card/50 text-muted-foreground hover:text-foreground hover:border-foreground'
+                    }`}
+                  >
+                    {isSelectionMode ? 'Cancel' : 'Select'}
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          <FilterBar onFilterChange={setFilters} anomalyConfigs={anomalyConfigs} severityConfigs={severityConfigs} />
+        </div>
       </div>
 
       <motion.div
