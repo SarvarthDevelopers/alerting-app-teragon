@@ -16,7 +16,11 @@ import { Bell, Activity, Settings, Search, User } from 'lucide-react';
 
 type Tab = 'alerts' | 'systems' | 'settings';
 
-export default function DesktopApp() {
+interface DesktopAppProps {
+  onLogout: () => void;
+}
+
+export default function DesktopApp({ onLogout }: DesktopAppProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
@@ -126,6 +130,7 @@ export default function DesktopApp() {
         activeTab={activeTab} 
         setActiveTab={navigateToTab} 
         activeAlertsCount={activeAlertsCount} 
+        onLogout={onLogout}
       />
       
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">

@@ -8,9 +8,10 @@ interface DesktopSidebarProps {
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
   activeAlertsCount: number;
+  onLogout: () => void;
 }
 
-export function DesktopSidebar({ activeTab, setActiveTab, activeAlertsCount }: DesktopSidebarProps) {
+export function DesktopSidebar({ activeTab, setActiveTab, activeAlertsCount, onLogout }: DesktopSidebarProps) {
   const menuItems = [
     { id: 'alerts' as Tab, label: 'Alerts', icon: Bell, badge: activeAlertsCount },
     { id: 'systems' as Tab, label: 'Systems', icon: Activity },
@@ -84,7 +85,10 @@ export function DesktopSidebar({ activeTab, setActiveTab, activeAlertsCount }: D
               <p className="text-[10px] text-muted-foreground font-bold truncate opacity-60">System Supervisor</p>
             </div>
           </div>
-          <button className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-colors text-[10px] font-black uppercase tracking-widest">
+          <button 
+            onClick={onLogout}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-colors text-[10px] font-black uppercase tracking-widest"
+          >
             <LogOut size={14} />
             Logout
           </button>

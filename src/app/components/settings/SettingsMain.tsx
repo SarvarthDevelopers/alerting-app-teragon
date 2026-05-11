@@ -21,6 +21,7 @@ interface SettingsMainProps {
   setSeverityConfigs: (configs: SeverityConfig[]) => void;
   displaySettings: DisplaySettingsType;
   setDisplaySettings: (settings: DisplaySettingsType) => void;
+  onLogout: () => void;
 }
 
 export function SettingsMain({ 
@@ -32,7 +33,8 @@ export function SettingsMain({
   severityConfigs,
   setSeverityConfigs,
   displaySettings,
-  setDisplaySettings
+  setDisplaySettings,
+  onLogout
 }: SettingsMainProps) {
   const [activeScreen, setActiveScreen] = useState<SettingsScreen>('main');
   const [showToast, setShowToast] = useState(false);
@@ -153,7 +155,7 @@ export function SettingsMain({
               if (!isConfirmingLogout) {
                 setIsConfirmingLogout(true);
               } else {
-                console.log('Logging out...');
+                onLogout();
                 setIsConfirmingLogout(false);
               }
             }}

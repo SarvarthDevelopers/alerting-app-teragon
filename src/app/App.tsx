@@ -16,7 +16,11 @@ import { AnomalyConfig, SeverityConfig, DisplaySettings as DisplaySettingsType }
 
 type Tab = 'alerts' | 'systems' | 'settings';
 
-export default function App() {
+interface AppProps {
+  onLogout: () => void;
+}
+
+export default function App({ onLogout }: AppProps) {
   const [activeTab, setActiveTab] = useState<Tab>('alerts');
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -183,6 +187,7 @@ export default function App() {
               setSeverityConfigs={setSeverityConfigs}
               displaySettings={displaySettings}
               setDisplaySettings={setDisplaySettings}
+              onLogout={onLogout}
             />
           ) : (
             <div className="max-w-7xl mx-auto px-4">
