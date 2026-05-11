@@ -15,6 +15,7 @@ interface FilterBarProps {
   hideSystemFilter?: boolean;
   anomalyConfigs: AnomalyConfig[];
   severityConfigs: SeverityConfig[];
+  onClear?: () => void;
 }
 
 const DEFAULT_FILTERS = {
@@ -27,7 +28,7 @@ const DEFAULT_FILTERS = {
 
 const TRIGGER_CLASS = 'h-11 w-auto rounded-xl border-border/50 bg-card text-xs font-bold gap-1.5 px-3 focus-visible:ring-4 focus-visible:ring-black/5 focus-visible:border-black transition-all outline-none';
 
-export function FilterBar({ onFilterChange, hideSystemFilter, anomalyConfigs, severityConfigs }: FilterBarProps) {
+export function FilterBar({ onFilterChange, hideSystemFilter, anomalyConfigs, severityConfigs, onClear }: FilterBarProps) {
   const [selectedFilters, setSelectedFilters] = useState(DEFAULT_FILTERS);
 
   const handleSelect = (category: string, value: string) => {
@@ -125,23 +126,26 @@ export function FilterBar({ onFilterChange, hideSystemFilter, anomalyConfigs, se
 
       <AnimatePresence>
         {isFilterActive && (
-          <>
-            <div className="h-6 w-px bg-border/50 mx-1 shrink-0" />
-            <motion.button
-              initial={{ opacity: 0, scale: 0.8, x: 20 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              exit={{ opacity: 0, scale: 0.8, x: 20 }}
+          <motion.div
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
+            className="flex items-center shrink-0"
+          >
+            <div className="h-6 w-px bg-border/50 mx-2 shrink-0" />
+            <button
               className="flex items-center gap-2 pl-3 pr-4 h-11 rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all group shrink-0"
               title="Clear all filters"
               onClick={() => {
                 setSelectedFilters(DEFAULT_FILTERS);
                 onFilterChange(DEFAULT_FILTERS);
+                onClear?.();
               }}
             >
               <X size={16} className="group-hover:rotate-90 transition-transform duration-300" />
               <span className="text-[10px] font-black uppercase tracking-widest">Clear</span>
-            </motion.button>
-          </>
+            </button>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

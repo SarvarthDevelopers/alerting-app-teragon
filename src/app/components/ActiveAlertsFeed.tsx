@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getAllActiveAlerts, mockMeasurements } from '../data/mockData';
 import { MeasurementCard } from './MeasurementCard';
 import { FilterDrawer, FilterOptions } from './FilterDrawer';
@@ -78,7 +78,8 @@ export function ActiveAlertsFeed({ anomalyConfigs, severityConfigs, displaySetti
     return () => clearInterval(interval);
   }, [alertCount]);
 
-  const filteredMeasurements = mockMeasurements
+  const filteredMeasurements = useMemo(() => {
+    return mockMeasurements
     .filter(m => {
       const isSessionAcked = sessionAcked.has(m.id);
       const isDataAcked = m.alerts.length > 0 && m.alerts.every(a => a.currentState === 'ACKNOWLEDGED');
@@ -127,6 +128,8 @@ export function ActiveAlertsFeed({ anomalyConfigs, severityConfigs, displaySetti
       return aHighestPriority - bHighestPriority;
     })
     .slice(0, displaySettings.latestNCount);
+  }, [activeFilter, sessionAcked, filters, anomalyConfigs, displaySettings.latestNCount]);
+
 
   const hasActiveFilters = filters.anomalyTypes.length > 0 ||
                           filters.severities.length > 0 ||

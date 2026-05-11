@@ -13,9 +13,10 @@ import { Input } from '../../../app/components/ui/input';
 interface DesktopDisplaySettingsProps {
   settings: DisplaySettingsType;
   onUpdate: (settings: DisplaySettingsType) => void;
+  onResetApp: () => void;
 }
 
-export function DesktopDisplaySettings({ settings, onUpdate }: DesktopDisplaySettingsProps) {
+export function DesktopDisplaySettings({ settings, onUpdate, onResetApp }: DesktopDisplaySettingsProps) {
   const updateSetting = <K extends keyof DisplaySettingsType>(key: K, value: DisplaySettingsType[K]) => {
     onUpdate({ ...settings, [key]: value });
   };
@@ -132,6 +133,26 @@ export function DesktopDisplaySettings({ settings, onUpdate }: DesktopDisplaySet
               checked={settings.colorBlindMode}
               onCheckedChange={(val) => updateSetting('colorBlindMode', val)}
             />
+          </div>
+        </div>
+
+        {/* Card 5: Demo Controls */}
+        <div className="bg-red-50/50 border border-red-100 rounded-2xl p-6 shadow-sm hover:border-red-200 transition-all duration-200">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Label className="text-sm font-bold text-red-900 block uppercase tracking-widest">
+                Developer / Demo Controls
+              </Label>
+              <p className="text-xs text-red-700/70 leading-relaxed">
+                Restore application to factory default state. This clears all session acknowledgments.
+              </p>
+            </div>
+            <button 
+              onClick={onResetApp}
+              className="h-12 px-8 rounded-xl bg-red-600 text-white text-[11px] font-black uppercase tracking-widest hover:bg-red-700 shadow-lg shadow-red-600/20 transition-all hover:-translate-y-0.5 active:translate-y-0"
+            >
+              Reset App State
+            </button>
           </div>
         </div>
       </div>

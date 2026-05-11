@@ -22,7 +22,7 @@ export function BulkActionBar({ selectedCount, onAcknowledgeAll, onCancel, isRes
           <motion.div
             layout
             className={`flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl shadow-black/25 transition-colors duration-500 ${
-              isResolving ? 'bg-emerald-500' : 'bg-foreground text-background'
+              isResolving ? 'bg-primary text-primary-foreground' : 'bg-foreground text-background'
             }`}
           >
             <AnimatePresence mode="wait">
@@ -33,16 +33,16 @@ export function BulkActionBar({ selectedCount, onAcknowledgeAll, onCancel, isRes
                   animate={{ opacity: 1, scale: 1 }}
                   className="flex items-center gap-3 px-2"
                 >
-                  <motion.div
-                    initial={{ scale: 0, rotate: -45 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ type: 'spring', damping: 12 }}
-                  >
-                    <CheckCircle2 size={18} className="text-white" />
-                  </motion.div>
-                  <span className="text-[11px] font-black uppercase tracking-widest text-white whitespace-nowrap">
-                    {selectedCount} Alert{selectedCount !== 1 ? 's' : ''} Resolved
-                  </span>
+                    <motion.div
+                      initial={{ scale: 0, rotate: -45 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: 'spring', damping: 12 }}
+                    >
+                      <CheckCircle2 size={18} className="text-primary-foreground" />
+                    </motion.div>
+                    <span className="text-[11px] font-black uppercase tracking-widest text-primary-foreground whitespace-nowrap">
+                      {selectedCount} Alert{selectedCount !== 1 ? 's' : ''} Resolved
+                    </span>
                 </motion.div>
               ) : (
                 <motion.div
@@ -62,9 +62,9 @@ export function BulkActionBar({ selectedCount, onAcknowledgeAll, onCancel, isRes
 
                   <button
                     onClick={onAcknowledgeAll}
-                    className="flex items-center gap-2 bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-emerald-400 active:scale-95 transition-all shadow-lg shadow-emerald-500/30"
+                    className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/30"
                   >
-                    <CheckCircle2 size={14} />
+                    <CheckCircle2 size={14} className="text-primary-foreground" />
                     Acknowledge All
                   </button>
 

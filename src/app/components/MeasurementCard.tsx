@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo, memo } from 'react';
 import { Measurement, Severity, AnomalyConfig, SeverityConfig, DisplaySettings as DisplaySettingsType } from '../types';
 import { getSystemDisplayName } from '../data/mockData';
 import { SeverityBadge } from './AlertBadge';
@@ -51,7 +51,7 @@ interface MeasurementCardProps {
   setShowLargeUnit: (val: boolean) => void;
 }
 
-export function MeasurementCard({ 
+export const MeasurementCard = memo(({ 
   measurement, 
   forceCollapsed = false,
   anomalyConfigs,
@@ -63,11 +63,11 @@ export function MeasurementCard({
   onToggleExpand: externalOnToggleExpand,
   showLargeUnit,
   setShowLargeUnit
-}: MeasurementCardProps) {
+}: MeasurementCardProps) => {
   const hasAlerts = measurement.alerts.length > 0;
-  const activeAlerts = measurement.alerts.filter(a => a.currentState === 'NEW');
+  const activeAlerts = useMemo(() => measurement.alerts.filter(a => a.currentState === 'NEW'), [measurement.alerts]);
   const hasActiveAlerts = activeAlerts.length > 0 && !sessionAckInfo;
-  const acknowledgedAlerts = measurement.alerts.filter(a => a.currentState === 'ACKNOWLEDGED');
+  const acknowledgedAlerts = useMemo(() => measurement.alerts.filter(a => a.currentState === 'ACKNOWLEDGED'), [measurement.alerts]);
   const hasAcknowledgedAlerts = acknowledgedAlerts.length > 0;
 
   const [internalIsExpanded, setInternalIsExpanded] = useState(forceCollapsed ? false : hasAlerts);
@@ -123,7 +123,7 @@ export function MeasurementCard({
     }
   };
 
-  const getHighestSeverity = (): Severity | null => {
+  const highestSeverity = useMemo(() => {
     if (!hasAlerts) return null;
 
     const severityOrder: { [key in Severity]: number } = {
@@ -138,26 +138,22 @@ export function MeasurementCard({
         ? alert
         : highest;
     }).severity;
-  };
+  }, [measurement.alerts, hasAlerts]);
 
-  const getStatusColor = () => {
+  const statusColor = useMemo(() => {
     if (!hasAlerts) return '#9fe870';
-    const highest = getHighestSeverity();
-    return highest ? `var(--severity-${highest.toLowerCase()})` : '#9fe870';
-  };
+    return highestSeverity ? `var(--severity-${highestSeverity.toLowerCase()})` : '#9fe870';
+  }, [hasAlerts, highestSeverity]);
 
-  const getBorderColor = () => {
+  const borderColor = useMemo(() => {
     if (!hasAlerts) return 'var(--border)';
-    const highest = getHighestSeverity();
-    if (highest === 'CRITICAL' || highest === 'HIGH') {
-      return `var(--severity-${highest.toLowerCase()})`;
+    if (highestSeverity === 'CRITICAL' || highestSeverity === 'HIGH') {
+      return `var(--severity-${highestSeverity.toLowerCase()})`;
     }
     return 'var(--border)';
-  };
+  }, [hasAlerts, highestSeverity]);
 
-  const highestSeverity = getHighestSeverity();
-
-  const getDisplayTime = (): string => {
+  const displayTime = useMemo(() => {
     if (!hasAlerts) return measurement.timestamp;
 
     const latestAlert = measurement.alerts.reduce((latest, alert) => {
@@ -165,7 +161,7 @@ export function MeasurementCard({
     });
 
     return latestAlert.createdAt;
-  };
+  }, [measurement.alerts, measurement.timestamp, hasAlerts]);
 
   const handleAcknowledge = () => {
     setShowConfirmation(false);
@@ -181,13 +177,12 @@ export function MeasurementCard({
   };
 
   const segments = 30;
-  const displayTime = getDisplayTime();
 
   return (
     <div
       className="bg-card rounded-xl border relative overflow-hidden"
       style={{
-        borderColor: getBorderColor(),
+        borderColor: borderColor,
       }}
     >
 
@@ -523,4 +518,4 @@ export function MeasurementCard({
       </AnimatePresence>
     </div>
   );
-}
+});

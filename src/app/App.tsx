@@ -60,33 +60,32 @@ export default function App({ onLogout }: AppProps) {
 
   const handleScroll = (e: React.UIEvent<HTMLElement>) => {
     const currentScrollY = e.currentTarget.scrollTop;
+    
+    // Quick exit for settings tab
+    if (activeTab === 'settings') {
+      if (!showHeader) setShowHeader(true);
+      setLastScrollY(currentScrollY);
+      return;
+    }
+
     const scrollHeight = e.currentTarget.scrollHeight;
     const clientHeight = e.currentTarget.clientHeight;
     const maxScroll = scrollHeight - clientHeight;
     const diff = currentScrollY - lastScrollY;
 
-    // Ignore rubber-banding or overscroll events on mobile
-    if (currentScrollY < 0 || currentScrollY > maxScroll) {
-      return;
-    }
-
-    // Never hide header on Settings screens
-    if (activeTab === 'settings') {
-      setShowHeader(true);
-      setLastScrollY(currentScrollY);
-      return;
-    }
+    // Ignore rubber-banding
+    if (currentScrollY < 0 || currentScrollY > maxScroll) return;
 
     if (currentScrollY <= 10) {
-      setShowHeader(true);
-    } else if (Math.abs(diff) > 10) {
+      if (!showHeader) setShowHeader(true);
+    } else if (Math.abs(diff) > 15) { // Increased threshold slightly
       if (currentScrollY > lastScrollY && currentScrollY > 80) {
-        setShowHeader(false);
+        if (showHeader) setShowHeader(false);
       } else if (currentScrollY < lastScrollY) {
-        setShowHeader(true);
+        if (!showHeader) setShowHeader(true);
       }
+      setLastScrollY(currentScrollY);
     }
-    setLastScrollY(currentScrollY);
   };
 
   const tabs = [

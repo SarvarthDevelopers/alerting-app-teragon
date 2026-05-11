@@ -20,6 +20,8 @@ interface DesktopSettingsProps {
   setDisplaySettings: (s: DisplaySettingsType) => void;
   users: User[];
   setUsers: (u: User[]) => void;
+  showHeader: boolean;
+  onResetApp: () => void;
 }
 
 const NAV_ITEMS: { id: SettingsSection; label: string; icon: React.ElementType }[] = [
@@ -34,6 +36,8 @@ export function DesktopSettings({
   severityConfigs, setSeverityConfigs,
   displaySettings, setDisplaySettings,
   users, setUsers,
+  showHeader,
+  onResetApp,
 }: DesktopSettingsProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -60,7 +64,12 @@ export function DesktopSettings({
     <div className="grid grid-cols-[auto_1fr] gap-8 items-start">
 
       {/* ── Left Navigation ── */}
-      <div className="bg-card/50 backdrop-blur-md border border-border/50 rounded-3xl p-3 shadow-sm sticky top-8">
+      <motion.div 
+        initial={false}
+        animate={{ top: showHeader ? 104 : 24 }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        className="bg-card/50 backdrop-blur-md border border-border/50 rounded-3xl p-3 shadow-sm sticky"
+      >
 
         <div className="space-y-1 py-3">
           {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
@@ -88,7 +97,7 @@ export function DesktopSettings({
             );
           })}
         </div>
-      </div>
+      </motion.div>
 
       {/* ── Right Content Panel ── */}
       <div className="bg-card/50 border border-border/50 rounded-3xl overflow-hidden shadow-sm min-h-[500px]">
@@ -120,6 +129,7 @@ export function DesktopSettings({
               <DesktopDisplaySettings
                 settings={displaySettings}
                 onUpdate={(settings) => { setDisplaySettings(settings); triggerToast(); }}
+                onResetApp={onResetApp}
               />
             )}
             

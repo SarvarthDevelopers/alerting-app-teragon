@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo, memo } from 'react';
 import { Measurement, Severity, DisplaySettings } from '../../app/types';
 import { getAnomalyConfig, getSystemDisplayName } from '../../app/data/mockData';
 import { SeverityBadge } from '../../app/components/AlertBadge';
@@ -22,7 +22,7 @@ interface DesktopAlertCardProps {
   onToggleExpand?: (expanded: boolean) => void;
 }
 
-export function DesktopAlertCard({ 
+export const DesktopAlertCard = memo(({ 
   measurement, 
   showLargeUnit, 
   setShowLargeUnit,
@@ -36,7 +36,7 @@ export function DesktopAlertCard({
   onToggleSelect,
   isExpanded: externalIsExpanded,
   onToggleExpand: externalOnToggleExpand,
-}: DesktopAlertCardProps) {
+}: DesktopAlertCardProps) => {
   const [internalIsExpanded, setInternalIsExpanded] = useState(false);
   const isExpanded = externalIsExpanded !== undefined ? externalIsExpanded : internalIsExpanded;
   const setIsExpanded = (val: boolean) => {
@@ -106,11 +106,11 @@ export function DesktopAlertCard({
   };
 
   const hasAlerts = measurement.alerts.length > 0;
-  const activeAlerts = measurement.alerts.filter(a => a.currentState === 'NEW');
-  const isAcknowledged = isSessionAck || measurement.alerts.every(a => a.currentState === 'ACKNOWLEDGED');
+  const activeAlerts = useMemo(() => measurement.alerts.filter(a => a.currentState === 'NEW'), [measurement.alerts]);
+  const isAcknowledged = useMemo(() => isSessionAck || measurement.alerts.every(a => a.currentState === 'ACKNOWLEDGED'), [isSessionAck, measurement.alerts]);
 
-  const timestamp = new Date(measurement.timestamp);
-  const isOlderThan24h = (new Date().getTime() - timestamp.getTime()) > 86400000;
+  const timestamp = useMemo(() => new Date(measurement.timestamp), [measurement.timestamp]);
+  const isOlderThan24h = useMemo(() => (new Date().getTime() - timestamp.getTime()) > 86400000, [timestamp]);
 
   const handleInteraction = (e: React.MouseEvent) => {
     if (!rulerRef.current) return;
@@ -140,9 +140,11 @@ export function DesktopAlertCard({
     }
   };
 
-  const timeDisplay = isOlderThan24h || showExactTime 
-    ? formatExpandedTime(measurement.timestamp)
-    : getRelativeTime(measurement.timestamp);
+  const timeDisplay = useMemo(() => {
+    return isOlderThan24h || showExactTime 
+      ? formatExpandedTime(measurement.timestamp)
+      : getRelativeTime(measurement.timestamp);
+  }, [isOlderThan24h, showExactTime, measurement.timestamp]);
 
   return (
     <motion.div
@@ -504,9 +506,7 @@ export function DesktopAlertCard({
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                 >
-                  <motion.button 
-                    whileHover={{ scale: 1.02, y: -1 }}
-                    whileTap={{ scale: 0.98 }}
+                  <button 
                     onClick={(e) => {
                       e.stopPropagation();
                       // Toggle expanded state if clicking the primary status button
@@ -522,21 +522,19 @@ export function DesktopAlertCard({
                         setSelectedAlertId(null);
                       }
                     }}
-                    className={`mt-2 w-full flex items-center justify-center gap-2 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-500 ${
+                    className={`mt-2 w-full flex items-center justify-center gap-2 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-colors duration-200 ${
                       isAcknowledged
                         ? 'bg-[#0071e3]/10 text-[#0071e3] border border-[#0071e3]/10 hover:bg-[#0071e3]/20'
                         : (isExpanded && showAcknowledgeForm)
                         ? 'bg-transparent text-black/40 border border-black/10 hover:border-black/20 hover:text-black/60'
-                        : 'bg-black text-white shadow-lg shadow-black/10 hover:shadow-black/20 hover:bg-zinc-800'
+                        : 'bg-secondary text-secondary-foreground/80 border border-secondary hover:bg-black hover:text-white hover:border-black'
                     }`}
                   >
                     <span>{isAcknowledged ? 'Acknowledged' : 'Acknowledge'}</span>
-                    {(isExpanded && (showAcknowledgeForm || isAcknowledged)) ? (
+                    {(isExpanded && (showAcknowledgeForm || isAcknowledged)) && (
                       <X size={14} className={isAcknowledged ? 'text-[#0071e3]/60' : 'text-black/30'} />
-                    ) : (
-                      isAcknowledged ? <Info size={14} className="text-[#0071e3]" /> : <CheckCircle2 size={14} className="text-white/40" />
                     )}
-                  </motion.button>
+                  </button>
                 </motion.div>
               </AnimatePresence>
             </div>
@@ -553,11 +551,11 @@ export function DesktopAlertCard({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-            className="border-t border-border/50 bg-muted/5 overflow-hidden flex flex-col rounded-b-[32px]"
+            className="border-t border-border/50 bg-white overflow-hidden flex flex-col rounded-b-[32px]"
           >
             {/* Anomaly Pill Shelf (Only if explicitly requested via "+N more") */}
             {showMoreShelf && (
-              <motion.div layout="position" className="border-b border-black/5 bg-black/[0.02] w-full relative">
+              <motion.div layout="position" className="border-b border-border/40 bg-black/[0.02] w-full relative">
               <div 
                 ref={shelfRef}
                 onMouseDown={handleShelfMouseDown}
@@ -626,14 +624,14 @@ export function DesktopAlertCard({
                     animate={{ opacity: 1, filter: 'blur(0px)' }}
                     exit={{ opacity: 0, filter: 'blur(4px)' }}
                     transition={{ duration: 0.2, ease: "easeInOut" }}
-                    className="bg-black/5 border-t border-black/15 min-h-[120px] flex items-stretch w-full rounded-b-[32px]"
+                    className="border-t border-border/40 min-h-[120px] flex items-stretch w-full rounded-b-[32px]"
                   >
                     <div className="flex-1 flex items-stretch">
                       {isSelectionMode && (
-                        <div className="border-r border-black/15 shrink-0 w-[48px]" />
+                        <div className="border-r border-border/40 shrink-0 w-[48px]" />
                       )}
 
-                      <div className="w-64 px-8 border-r border-black/15 h-full flex flex-col justify-center">
+                      <div className="w-64 px-8 border-r border-border/40 h-full flex flex-col justify-center">
                         <span className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-1.5">
                           {getAnomalyConfig(selectedAlert.anomalyType)?.displayName}
                         </span>
@@ -642,7 +640,7 @@ export function DesktopAlertCard({
                         </span>
                       </div>
 
-                      <div className="flex-1 px-10 py-6 border-r border-black/15 h-full flex items-center">
+                      <div className="flex-1 px-10 py-6 border-r border-border/40 h-full flex items-center">
                         <p className="text-sm font-medium text-foreground/80 italic leading-relaxed">
                           {selectedAlert.technicalDetails}
                         </p>
@@ -673,32 +671,38 @@ export function DesktopAlertCard({
                     animate={{ opacity: 1, filter: 'blur(0px)' }}
                     exit={{ opacity: 0, filter: 'blur(4px)' }}
                     transition={{ duration: 0.2, ease: "easeInOut" }}
-                    className="px-12 py-10 flex items-center justify-between gap-12 min-h-[120px] w-full rounded-b-[32px]"
+                    className="border-t border-border/40 min-h-[120px] flex items-stretch w-full rounded-b-[32px]"
                   >
-                    <div className="flex items-center gap-8 flex-1">
-                      <div className="w-16 h-16 rounded-[24px] flex items-center justify-center shrink-0 shadow-inner bg-[#0071e3]/5 border border-[#0071e3]/10">
-                        <CheckCircle2 size={32} className="text-[#0071e3]" />
-                      </div>
-                      <div>
-                        <h4 className="text-xl font-black text-foreground tracking-tight">
-                          Resolution Details
-                        </h4>
-                        <p className="text-xs text-muted-foreground font-bold mt-1.5 leading-relaxed max-w-2xl">
-                          Verified and acknowledged by <span className="text-black underline decoration-emerald-500 decoration-2 underline-offset-4">John Supervisor</span> on {new Date(measurement.timestamp).toLocaleDateString()} at {new Date(measurement.timestamp).toLocaleTimeString()}.
-                        </p>
-                      </div>
-                    </div>
+                    <div className="flex-1 flex items-stretch">
+                      {isSelectionMode && (
+                        <div className="border-r border-border/40 shrink-0 w-[48px]" />
+                      )}
 
-                    <div className="flex items-center gap-6">
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsExpanded(false);
-                        }}
-                        className="px-10 py-4 rounded-2xl border border-black/10 text-[10px] font-black uppercase tracking-[0.15em] hover:bg-black/5 transition-all"
-                      >
-                        Close Details
-                      </button>
+                      <div className="flex-1 px-12 py-6 border-r border-border/40 flex items-center gap-8">
+                        <div className="w-16 h-16 rounded-[24px] flex items-center justify-center shrink-0 shadow-inner bg-[#0071e3]/5 border border-[#0071e3]/10">
+                          <CheckCircle2 size={32} className="text-[#0071e3]" />
+                        </div>
+                        <div>
+                          <h4 className="text-xl font-black text-foreground tracking-tight">
+                            Resolution Details
+                          </h4>
+                          <p className="text-xs text-muted-foreground font-bold mt-1.5 leading-relaxed max-w-2xl">
+                            Verified and acknowledged by <span className="text-black underline decoration-emerald-500 decoration-2 underline-offset-4">John Supervisor</span> on {new Date(measurement.timestamp).toLocaleDateString()} at {new Date(measurement.timestamp).toLocaleTimeString()}.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="w-52 px-6 h-full flex items-center justify-center">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsExpanded(false);
+                          }}
+                          className="text-[10px] font-black uppercase tracking-widest text-black/40 hover:text-black hover:underline transition-colors"
+                        >
+                          Close
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
                 );
@@ -736,7 +740,7 @@ export function DesktopAlertCard({
                           e.stopPropagation();
                           handleResolve();
                         }}
-                        className="px-10 py-4 rounded-2xl bg-emerald-500 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all hover:-translate-y-0.5"
+                        className="px-10 py-4 rounded-2xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/25 hover:shadow-primary/40 transition-all hover:-translate-y-0.5 font-sans"
                       >
                         Confirm & Resolve
                       </motion.button>
@@ -764,4 +768,4 @@ export function DesktopAlertCard({
       </AnimatePresence>
     </motion.div>
   );
-}
+});

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { mockMeasurements, getAnomalyConfig, getSystemDisplayName } from '../../app/data/mockData';
 import { AnomalyConfig, SeverityConfig, DisplaySettings } from '../../app/types';
 import { DesktopAlertCard } from './DesktopAlertCard';
@@ -19,9 +19,27 @@ interface DesktopAlertsFeedProps {
   displaySettings: DisplaySettings;
   anomalyConfigs: AnomalyConfig[];
   severityConfigs: SeverityConfig[];
+  showHeader: boolean;
+  lastScrollY: number;
+  onClearFilters?: () => void;
 }
 
-export function DesktopAlertsFeed({ showLargeUnit, setShowLargeUnit, showExactTime, setShowExactTime, acknowledgedIds, onAcknowledge, activeView, setActiveView, displaySettings, anomalyConfigs, severityConfigs }: DesktopAlertsFeedProps) {
+export function DesktopAlertsFeed({ 
+  showLargeUnit, 
+  setShowLargeUnit, 
+  showExactTime, 
+  setShowExactTime, 
+  acknowledgedIds, 
+  onAcknowledge, 
+  activeView, 
+  setActiveView, 
+  displaySettings, 
+  anomalyConfigs, 
+  severityConfigs, 
+  showHeader, 
+  lastScrollY,
+  onClearFilters 
+}: DesktopAlertsFeedProps) {
   const [filters, setFilters] = useState({
     system: 'All Systems',
     anomalyType: 'All Types',
@@ -53,72 +71,74 @@ export function DesktopAlertsFeed({ showLargeUnit, setShowLargeUnit, showExactTi
     }, 1000);
   };
 
-  const filteredMeasurements = mockMeasurements.filter((m) => {
-    // Logic for "Active" vs "Acknowledged" based on props
-    const isAck = acknowledgedIds.has(m.id) || m.alerts.every(a => a.currentState === 'ACKNOWLEDGED');
-    
-    // ACTIVE: Must have alerts and NOT be acknowledged
-    if (activeView === 'active' && (isAck || m.alerts.length === 0)) return false;
-    
-    // ACKNOWLEDGED: Must have alerts AND be acknowledged
-    if (activeView === 'acknowledged' && (!isAck || m.alerts.length === 0)) return false;
-
-    // Enhanced Search Filter
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      const systemName = getSystemDisplayName(m.system).toLowerCase();
+  const filteredMeasurements = useMemo(() => {
+    return mockMeasurements.filter((m) => {
+      // Logic for "Active" vs "Acknowledged" based on props
+      const isAck = acknowledgedIds.has(m.id) || m.alerts.every(a => a.currentState === 'ACKNOWLEDGED');
       
-      const matchesBasic = 
-        m.serialNumber.toLowerCase().includes(searchLower) ||
-        m.productType.toLowerCase().includes(searchLower) ||
-        systemName.includes(searchLower) ||
-        m.productLength.toString().includes(searchLower);
+      // ACTIVE: Must have alerts and NOT be acknowledged
+      if (activeView === 'active' && (isAck || m.alerts.length === 0)) return false;
+      
+      // ACKNOWLEDGED: Must have alerts AND be acknowledged
+      if (activeView === 'acknowledged' && (!isAck || m.alerts.length === 0)) return false;
 
-      const matchesAnomalies = m.alerts.some(alert => {
-        const config = getAnomalyConfig(alert.anomalyType);
-        return (
-          config?.displayName.toLowerCase().includes(searchLower) ||
-          alert.severity.toLowerCase().includes(searchLower)
-        );
-      });
+      // Enhanced Search Filter
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        const systemName = getSystemDisplayName(m.system).toLowerCase();
+        
+        const matchesBasic = 
+          m.serialNumber.toLowerCase().includes(searchLower) ||
+          m.productType.toLowerCase().includes(searchLower) ||
+          systemName.includes(searchLower) ||
+          m.productLength.toString().includes(searchLower);
 
-      if (!matchesBasic && !matchesAnomalies) return false;
-    }
+        const matchesAnomalies = m.alerts.some(alert => {
+          const config = getAnomalyConfig(alert.anomalyType);
+          return (
+            config?.displayName.toLowerCase().includes(searchLower) ||
+            alert.severity.toLowerCase().includes(searchLower)
+          );
+        });
 
-    // Filter by System (Category Dropdown)
-    if (filters.system !== 'All Systems') {
-      const systemMap: { [key: string]: string } = {
-        'Surface Inspection': 'SURFACE_INSPECTION',
-        'Profile Measurement': 'PROFILE_MEASUREMENT',
-        'Flatness Measurement': 'FLATNESS_MEASUREMENT',
-      };
-      if (m.system !== systemMap[filters.system]) return false;
-    }
+        if (!matchesBasic && !matchesAnomalies) return false;
+      }
 
-    // Filter by Anomaly Type (Category Dropdown)
-    if (filters.anomalyType !== 'All Types') {
-      const hasMatchingType = m.alerts.some(alert => {
-        const config = getAnomalyConfig(alert.anomalyType);
-        return config?.displayName === filters.anomalyType;
-      });
-      if (!hasMatchingType) return false;
-    }
+      // Filter by System (Category Dropdown)
+      if (filters.system !== 'All Systems') {
+        const systemMap: { [key: string]: string } = {
+          'Surface Inspection': 'SURFACE_INSPECTION',
+          'Profile Measurement': 'PROFILE_MEASUREMENT',
+          'Flatness Measurement': 'FLATNESS_MEASUREMENT',
+        };
+        if (m.system !== systemMap[filters.system]) return false;
+      }
 
-    // Filter by Severity (Category Dropdown)
-    if (filters.severity !== 'All Severities') {
-      const hasMatchingSeverity = m.alerts.some(a => a.severity.toLowerCase() === filters.severity.toLowerCase());
-      if (!hasMatchingSeverity) return false;
-    }
+      // Filter by Anomaly Type (Category Dropdown)
+      if (filters.anomalyType !== 'All Types') {
+        const hasMatchingType = m.alerts.some(alert => {
+          const config = getAnomalyConfig(alert.anomalyType);
+          return config?.displayName === filters.anomalyType;
+        });
+        if (!hasMatchingType) return false;
+      }
 
-    return true;
-  });
+      // Filter by Severity (Category Dropdown)
+      if (filters.severity !== 'All Severities') {
+        const hasMatchingSeverity = m.alerts.some(a => a.severity.toLowerCase() === filters.severity.toLowerCase());
+        if (!hasMatchingSeverity) return false;
+      }
+
+      return true;
+    });
+  }, [acknowledgedIds, activeView, filters]);
 
   const views: { id: 'active' | 'acknowledged'; label: string }[] = [
     { id: 'active', label: 'Active Alerts' },
     { id: 'acknowledged', label: 'Acknowledged' }
   ];
 
-  const activeFilteredIds = filteredMeasurements.map(m => m.id);
+  const activeFilteredIds = useMemo(() => filteredMeasurements.map(m => m.id), [filteredMeasurements]);
   const allVisibleSelected = activeFilteredIds.length > 0 && activeFilteredIds.every(id => selectedIds.has(id));
 
   const toggleSelectAll = () => {
@@ -149,7 +169,12 @@ export function DesktopAlertsFeed({ showLargeUnit, setShowLargeUnit, showExactTi
 
   return (
     <div className="space-y-8">
-      <div className="sticky top-0 z-30 bg-background py-6 -mx-10 px-10 border-b border-border shadow-xl shadow-black/5 -mt-10">
+      <motion.div
+        initial={false}
+        animate={{ top: showHeader ? 80 : 0 }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        className="sticky z-30 py-6 bg-background/60 backdrop-blur-md -mx-10 px-10 border-b border-border/50"
+      >
         <div className="flex items-center justify-between gap-4">
           <div className="bg-muted border border-border/50 p-1.5 rounded-2xl inline-flex gap-1 shadow-sm">
             {views.map((view) => {
@@ -210,10 +235,15 @@ export function DesktopAlertsFeed({ showLargeUnit, setShowLargeUnit, showExactTi
             )}
           </AnimatePresence>
         </div>
-      </div>
+      </motion.div>
 
       <div className="flex flex-col gap-6">
-        <FilterBar onFilterChange={setFilters} anomalyConfigs={anomalyConfigs} severityConfigs={severityConfigs} />
+        <FilterBar 
+          onFilterChange={setFilters} 
+          anomalyConfigs={anomalyConfigs} 
+          severityConfigs={severityConfigs} 
+          onClear={onClearFilters}
+        />
       </div>
 
       <motion.div

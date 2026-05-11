@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { SystemType, AnomalyConfig, SeverityConfig, DisplaySettings } from '../../app/types';
 import { getMeasurementsBySystem, getSystemDisplayName, getAnomalyConfig } from '../../app/data/mockData';
 import { DesktopAlertCard } from './DesktopAlertCard';
@@ -15,9 +15,12 @@ interface DesktopSystemsViewProps {
   displaySettings: DisplaySettings;
   anomalyConfigs: AnomalyConfig[];
   severityConfigs: SeverityConfig[];
+  showHeader: boolean;
+  lastScrollY: number;
+  onClearFilters?: () => void;
 }
 
-export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, showExactTime, setShowExactTime, acknowledgedIds, onAcknowledge, displaySettings, anomalyConfigs, severityConfigs }: DesktopSystemsViewProps) {
+export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, showExactTime, setShowExactTime, acknowledgedIds, onAcknowledge, displaySettings, anomalyConfigs, severityConfigs, showHeader, lastScrollY, onClearFilters }: DesktopSystemsViewProps) {
   const [activeSystem, setActiveSystem] = useState<SystemType>('SURFACE_INSPECTION');
   const [filters, setFilters] = useState({
     system: 'All Systems', // This will be handled by the tabs mainly
@@ -27,6 +30,9 @@ export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, showExactT
     search: '',
   });
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
+  useEffect(() => {
+    setExpandedCardId(null);
+  }, [activeSystem]);
 
   const systems: { id: SystemType; label: string }[] = [
     { id: 'SURFACE_INSPECTION', label: 'Surface Inspection' },
@@ -93,7 +99,12 @@ export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, showExactT
 
   return (
     <div className="space-y-8">
-      <div className="sticky top-0 z-30 bg-background py-6 -mx-10 px-10 border-b border-border shadow-xl shadow-black/5 -mt-10">
+      <motion.div
+        initial={false}
+        animate={{ top: showHeader ? 80 : 0 }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        className="sticky z-30 py-6 bg-background/60 backdrop-blur-md -mx-10 px-10 border-b border-border/50"
+      >
         {/* System Selector Tabs */}
         <div className="bg-muted border border-border/50 p-1.5 rounded-2xl inline-flex gap-1 shadow-sm">
           {systems.map((system) => {
@@ -113,10 +124,16 @@ export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, showExactT
             );
           })}
         </div>
-      </div>
+      </motion.div>
 
       <div className="space-y-6">
-        <FilterBar onFilterChange={setFilters} hideSystemFilter={true} anomalyConfigs={anomalyConfigs} severityConfigs={severityConfigs} />
+        <FilterBar 
+          onFilterChange={setFilters} 
+          hideSystemFilter={true} 
+          anomalyConfigs={anomalyConfigs} 
+          severityConfigs={severityConfigs} 
+          onClear={onClearFilters}
+        />
         
         <motion.div
           key={activeSystem}
