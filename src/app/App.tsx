@@ -32,6 +32,11 @@ export default function App({ onLogout }: AppProps) {
   const [anomalyConfigs, setAnomalyConfigs] = useState<AnomalyConfig[]>(initialAnomalyConfigs);
   const [severityConfigs, setSeverityConfigs] = useState<SeverityConfig[]>(initialSeverityConfigs);
   const [displaySettings, setDisplaySettings] = useState<DisplaySettingsType>(initialDisplaySettings);
+  const [showLargeUnit, setShowLargeUnit] = useState(() => localStorage.getItem('mobile_showLargeUnit') !== 'false');
+
+  useEffect(() => {
+    localStorage.setItem('mobile_showLargeUnit', showLargeUnit.toString());
+  }, [showLargeUnit]);
 
   // Sync CSS variables with severity colors
   useEffect(() => {
@@ -196,6 +201,8 @@ export default function App({ onLogout }: AppProps) {
                   anomalyConfigs={anomalyConfigs}
                   severityConfigs={severityConfigs}
                   displaySettings={displaySettings}
+                  showLargeUnit={showLargeUnit}
+                  setShowLargeUnit={setShowLargeUnit}
                 />
               )}
               {activeTab === 'systems' && (
@@ -203,6 +210,8 @@ export default function App({ onLogout }: AppProps) {
                   anomalyConfigs={anomalyConfigs}
                   severityConfigs={severityConfigs}
                   displaySettings={displaySettings}
+                  showLargeUnit={showLargeUnit}
+                  setShowLargeUnit={setShowLargeUnit}
                 />
               )}
             </div>

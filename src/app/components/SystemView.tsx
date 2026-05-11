@@ -11,15 +11,18 @@ interface SystemViewProps {
   anomalyConfigs: AnomalyConfig[];
   severityConfigs: SeverityConfig[];
   displaySettings: DisplaySettingsType;
+  showLargeUnit: boolean;
+  setShowLargeUnit: (val: boolean) => void;
 }
 
-export function SystemView({ system, anomalyConfigs, severityConfigs, displaySettings }: SystemViewProps) {
+export function SystemView({ system, anomalyConfigs, severityConfigs, displaySettings, showLargeUnit, setShowLargeUnit }: SystemViewProps) {
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [filters, setFilters] = useState<FilterOptions>({
     anomalyTypes: [],
     severities: [],
     timeSpan: null
   });
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
   const allMeasurements = getMeasurementsBySystem(system);
   const displayName = getSystemDisplayName(system);
@@ -137,6 +140,10 @@ export function SystemView({ system, anomalyConfigs, severityConfigs, displaySet
                     anomalyConfigs={anomalyConfigs}
                     severityConfigs={severityConfigs}
                     displaySettings={displaySettings}
+                    isExpanded={expandedCardId === measurement.id}
+                    onToggleExpand={(expanded) => setExpandedCardId(expanded ? measurement.id : null)}
+                    showLargeUnit={showLargeUnit}
+                    setShowLargeUnit={setShowLargeUnit}
                   />
                 </motion.div>
               ))}

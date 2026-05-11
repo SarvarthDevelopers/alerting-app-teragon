@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Measurement, Severity, AnomalyConfig, SeverityConfig, DisplaySettings as DisplaySettingsType } from '../types';
 import { getSystemDisplayName } from '../data/mockData';
 import { SeverityBadge } from './AlertBadge';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Info, ArrowLeft, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const getRelativeTime = (timestamp: string): string => {
@@ -45,6 +45,10 @@ interface MeasurementCardProps {
   displaySettings: DisplaySettingsType;
   onAcknowledge?: (id: string) => void;
   sessionAckInfo?: { acknowledgedBy: string; acknowledgedAt: string };
+  isExpanded?: boolean;
+  onToggleExpand?: (expanded: boolean) => void;
+  showLargeUnit: boolean;
+  setShowLargeUnit: (val: boolean) => void;
 }
 
 export function MeasurementCard({ 
@@ -55,19 +59,39 @@ export function MeasurementCard({
   displaySettings,
   onAcknowledge,
   sessionAckInfo,
+  isExpanded: externalIsExpanded,
+  onToggleExpand: externalOnToggleExpand,
+  showLargeUnit,
+  setShowLargeUnit
 }: MeasurementCardProps) {
   const hasAlerts = measurement.alerts.length > 0;
   const activeAlerts = measurement.alerts.filter(a => a.currentState === 'NEW');
-  const hasActiveAlerts = activeAlerts.length > 0;
+  const hasActiveAlerts = activeAlerts.length > 0 && !sessionAckInfo;
   const acknowledgedAlerts = measurement.alerts.filter(a => a.currentState === 'ACKNOWLEDGED');
   const hasAcknowledgedAlerts = acknowledgedAlerts.length > 0;
 
-  const [isExpanded, setIsExpanded] = useState(forceCollapsed ? false : hasAlerts);
+  const [internalIsExpanded, setInternalIsExpanded] = useState(forceCollapsed ? false : hasAlerts);
+  const isExpanded = externalIsExpanded !== undefined ? externalIsExpanded : internalIsExpanded;
+  const setIsExpanded = (val: boolean) => {
+    if (externalOnToggleExpand) {
+      externalOnToggleExpand(val);
+    } else {
+      setInternalIsExpanded(val);
+    }
+  };
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isAcknowledging, setIsAcknowledging] = useState(false);
-  const [showLargeUnit, setShowLargeUnit] = useState(true);
+  const [showMoreAlerts, setShowMoreAlerts] = useState(false);
   const [scrubberPos, setScrubberPos] = useState<number | null>(null);
+  const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const rulerRef = useRef<HTMLDivElement>(null);
+
+  // Reset selected detail if card collapses
+  useEffect(() => {
+    if (!isExpanded) {
+      setSelectedAlertId(null);
+    }
+  }, [isExpanded]);
 
   const handleInteraction = (e: React.MouseEvent | React.TouchEvent) => {
     if (!rulerRef.current) return;
@@ -164,7 +188,6 @@ export function MeasurementCard({
       className="bg-card rounded-xl border relative overflow-hidden"
       style={{
         borderColor: getBorderColor(),
-        paddingBottom: (isExpanded && hasAlerts) ? '1.25rem' : '0'
       }}
     >
 
@@ -216,7 +239,7 @@ export function MeasurementCard({
             transition={{ duration: 0.3 }}
             className="overflow-hidden"
           >
-            <div className={`px-4 pt-0 border-t border-border ${hasAlerts ? 'pb-4' : 'pb-0'}`}>
+            <div className={`px-4 pt-0 border-t border-border ${hasActiveAlerts ? 'pb-5' : 'pb-0'}`}>
               <div className="flex items-center justify-between mb-2 mt-4">
                 <div className="text-sm text-muted-foreground font-semibold">
                   {measurement.productType}
@@ -261,20 +284,33 @@ export function MeasurementCard({
 
                   {/* Anomaly bars */}
                   {measurement.alerts.map(alert => {
-                    const config = anomalyConfigs.find(c => c.type === alert.anomalyType);
                     const startPercent = (alert.startPos / measurement.productLength) * 100;
                     const widthPercent = (alert.length / measurement.productLength) * 100;
+                    const hasDetails = !!alert.technicalDetails;
+                    const isSelected = selectedAlertId === alert.id;
 
                     return (
-                      <div
+                      <motion.div
                         key={alert.id}
-                        className="absolute top-0 bottom-0 transition-all mix-blend-multiply"
+                        initial={{ scaleX: 0 }}
+                        animate={{ 
+                          scaleX: 1, 
+                          backgroundColor: getSeverityColor(alert.severity),
+                        }}
+                        transition={{ duration: 0.5, ease: 'easeOut' }}
+                        onClick={(e) => {
+                          if (hasDetails) {
+                            e.stopPropagation();
+                            setSelectedAlertId(isSelected ? null : alert.id);
+                          }
+                        }}
+                        className={`absolute top-0 bottom-0 origin-left mix-blend-multiply ${hasDetails ? 'cursor-pointer active:opacity-60' : ''}`}
                         style={{
                           left: `${startPercent}%`,
                           width: `${widthPercent}%`,
-                          backgroundColor: getSeverityColor(alert.severity)
+                          zIndex: isSelected ? 10 : 1,
+                          border: isSelected ? '2px solid black' : 'none'
                         }}
-                        title={`${config?.displayName}: ${alert.startPos}-${alert.startPos + alert.length} mm`}
                       />
                     );
                   })}
@@ -291,51 +327,118 @@ export function MeasurementCard({
 
               {hasAlerts && (
                 <div className="space-y-2 mb-4">
-                  {measurement.alerts.map(alert => {
-                    const config = anomalyConfigs.find(c => c.type === alert.anomalyType);
-                    const endPos = Math.min(
-                      alert.startPos + alert.length,
-                      measurement.productLength
-                    );
+                  {(() => {
+                    const maxDisplay = 3;
+                    const displayedAlerts = showMoreAlerts ? measurement.alerts : measurement.alerts.slice(0, maxDisplay);
+                    const remainingCount = measurement.alerts.length - maxDisplay;
 
                     return (
-                      <div key={alert.id} className="text-sm text-foreground">
-                        <span className="font-medium">{config?.displayName || alert.anomalyType}:</span>{' '}
-                        <span className="text-muted-foreground">
-                          {alert.startPos.toLocaleString()}-{endPos.toLocaleString()} mm
-                        </span>
-                      </div>
-                    );
-                  })}
+                      <>
+                        {displayedAlerts.map(alert => {
+                          const config = anomalyConfigs.find(c => c.type === alert.anomalyType);
+                          const endPos = Math.min(
+                            alert.startPos + alert.length,
+                            measurement.productLength
+                          );
+                          const hasDetails = !!alert.technicalDetails;
+                          const isSelected = selectedAlertId === alert.id;
 
-                  {(() => {
-                    const ackData = sessionAckInfo
-                      ? sessionAckInfo
-                      : hasAcknowledgedAlerts
-                        ? { acknowledgedBy: acknowledgedAlerts[0].acknowledgedBy || 'Unknown', acknowledgedAt: acknowledgedAlerts[0].acknowledgedAt }
-                        : null;
-                    return ackData ? (
-                      <div className="text-sm font-medium text-alert-acknowledged">
-                        Ackd by {ackData.acknowledgedBy} at{' '}
-                        {ackData.acknowledgedAt && new Date(ackData.acknowledgedAt).toLocaleTimeString('en-US', {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}{' '}
-                        on{' '}
-                        {ackData.acknowledgedAt && new Date(ackData.acknowledgedAt).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
+                          return (
+                            <div 
+                              key={alert.id} 
+                              onClick={(e) => {
+                                if (hasDetails) {
+                                  e.stopPropagation();
+                                  setSelectedAlertId(isSelected ? null : alert.id);
+                                }
+                              }}
+                              className={`py-1.5 transition-all ${hasDetails ? 'active:opacity-60' : ''}`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div 
+                                  className="w-1.5 h-1.5 rounded-full shrink-0" 
+                                  style={{ backgroundColor: getSeverityColor(alert.severity) }} 
+                                />
+                                <div className="flex-1 text-sm">
+                                  <span className={`font-bold text-foreground ${hasDetails ? 'border-b-[1.5px] border-dotted border-foreground/80' : ''}`}>
+                                    {config?.displayName || alert.anomalyType}:
+                                  </span>
+                                  <span className="text-muted-foreground ml-1 font-mono">
+                                    {alert.startPos.toLocaleString()} - {endPos.toLocaleString()} mm
+                                  </span>
+                                </div>
+                              </div>
+
+                              <AnimatePresence>
+                                {isSelected && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden"
+                                  >
+                                    <div className="ml-3.5 mt-1 pb-1">
+                                      <p className="text-sm font-normal leading-relaxed text-foreground/70 italic">
+                                        {alert.technicalDetails}
+                                      </p>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          );
                         })}
-                      </div>
-                    ) : null;
+                        
+                        {remainingCount > 0 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowMoreAlerts(!showMoreAlerts);
+                            }}
+                            className="mt-2 text-[10px] font-black text-foreground uppercase tracking-widest bg-foreground/5 px-3 py-2 rounded-xl border border-foreground/10 hover:bg-foreground/10 transition-colors flex items-center gap-2"
+                          >
+                            {showMoreAlerts ? (
+                              <>
+                                Show Less <ChevronUp size={12} />
+                              </>
+                            ) : (
+                              <>
+                                + {remainingCount} more anomalies <ChevronDown size={12} />
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </>
+                    );
                   })()}
                 </div>
               )}
 
+              {(() => {
+                const ackData = sessionAckInfo
+                  ? sessionAckInfo
+                  : hasAcknowledgedAlerts
+                    ? { acknowledgedBy: acknowledgedAlerts[0].acknowledgedBy || 'Unknown', acknowledgedAt: acknowledgedAlerts[0].acknowledgedAt }
+                    : null;
+                return ackData ? (
+                  <div className="text-sm font-medium text-alert-acknowledged">
+                    Ackd by {ackData.acknowledgedBy} at{' '}
+                    {ackData.acknowledgedAt && new Date(ackData.acknowledgedAt).toLocaleTimeString('en-US', {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}{' '}
+                    on{' '}
+                    {ackData.acknowledgedAt && new Date(ackData.acknowledgedAt).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}
+                  </div>
+                ) : null;
+              })()}
+
               {hasActiveAlerts && (
-                <div>
-                  {/* Question — slides in above via CSS grid */}
+                <div className="mt-4">
                   <div
                     style={{ display: 'grid', gridTemplateRows: showConfirmation ? '1fr' : '0fr' }}
                     className="transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
@@ -347,7 +450,6 @@ export function MeasurementCard({
                     </div>
                   </div>
 
-                  {/* Main button — label swaps, turns green on confirm */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -366,7 +468,6 @@ export function MeasurementCard({
                     {isAcknowledging ? '✓  DONE' : showConfirmation ? 'YES' : 'ACKNOWLEDGE'}
                   </button>
 
-                  {/* Cancel button — slides in below via CSS grid */}
                   <div
                     style={{ display: 'grid', gridTemplateRows: showConfirmation ? '1fr' : '0fr' }}
                     className="transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
@@ -390,29 +491,36 @@ export function MeasurementCard({
         )}
       </AnimatePresence>
 
-      {/* Collapsed histogram */}
-      {!isExpanded && hasAlerts && (
-        <div className="relative h-4 w-full bg-card border-t border-[#dedede]">
-          <div className="absolute inset-0 overflow-hidden">
-            {measurement.alerts.map(alert => {
-              const startPercent = (alert.startPos / measurement.productLength) * 100;
-              const widthPercent = (alert.length / measurement.productLength) * 100;
+      <AnimatePresence>
+        {!isExpanded && hasAlerts && (
+          <motion.div
+            initial={{ height: 0 }}
+            animate={{ height: 16 }}
+            exit={{ height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="relative h-4 w-full bg-card border-t border-[#dedede] overflow-hidden"
+          >
+            <div className="absolute inset-0">
+              {measurement.alerts.map(alert => {
+                const startPercent = (alert.startPos / measurement.productLength) * 100;
+                const widthPercent = (alert.length / measurement.productLength) * 100;
 
-              return (
-                <div
-                  key={alert.id}
-                  className="absolute top-0 bottom-0"
-                  style={{
-                    left: `${startPercent}%`,
-                    width: `${widthPercent}%`,
-                    backgroundColor: getSeverityColor(alert.severity)
-                  }}
-                />
-              );
-            })}
-          </div>
-        </div>
-      )}
+                return (
+                  <div
+                    key={alert.id}
+                    className="absolute top-0 bottom-0"
+                    style={{
+                      left: `${startPercent}%`,
+                      width: `${widthPercent}%`,
+                      backgroundColor: getSeverityColor(alert.severity)
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

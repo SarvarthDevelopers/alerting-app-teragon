@@ -3,7 +3,8 @@ import { getAllActiveAlerts, mockMeasurements } from '../data/mockData';
 import { MeasurementCard } from './MeasurementCard';
 import { FilterDrawer, FilterOptions } from './FilterDrawer';
 import { motion, AnimatePresence } from 'motion/react';
-import { Bell, SlidersHorizontal } from 'lucide-react';
+import { Bell, SlidersHorizontal, RotateCcw } from 'lucide-react';
+import { SavedToast } from './ui/SavedToast';
 
 type AlertFilter = 'active' | 'acknowledged';
 
@@ -13,13 +14,17 @@ interface ActiveAlertsFeedProps {
   anomalyConfigs: AnomalyConfig[];
   severityConfigs: SeverityConfig[];
   displaySettings: DisplaySettingsType;
+  showLargeUnit: boolean;
+  setShowLargeUnit: (val: boolean) => void;
 }
 
-export function ActiveAlertsFeed({ anomalyConfigs, severityConfigs, displaySettings }: ActiveAlertsFeedProps) {
+export function ActiveAlertsFeed({ anomalyConfigs, severityConfigs, displaySettings, showLargeUnit, setShowLargeUnit }: ActiveAlertsFeedProps) {
   const [activeFilter, setActiveFilter] = useState<AlertFilter>('active');
   const [alertCount, setAlertCount] = useState(0);
   const [hasNewAlert, setHasNewAlert] = useState(false);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('Filters applied');
   const [filters, setFilters] = useState<FilterOptions>({
     anomalyTypes: [],
     severities: [],
@@ -27,6 +32,7 @@ export function ActiveAlertsFeed({ anomalyConfigs, severityConfigs, displaySetti
   });
   // Track session-acknowledged cards with who/when metadata
   const [sessionAcked, setSessionAcked] = useState<Map<string, { acknowledgedBy: string; acknowledgedAt: string }>>(new Map());
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
   const handleAcknowledge = (id: string) => {
     setSessionAcked(prev => {
@@ -36,9 +42,29 @@ export function ActiveAlertsFeed({ anomalyConfigs, severityConfigs, displaySetti
     });
   };
 
+  const applyFilters = (newFilters: FilterOptions) => {
+    setFilters(newFilters);
+    setToastMessage('Filters applied');
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 2000);
+  };
+
+  const handleResetFilters = () => {
+    const defaultFilters = { anomalyTypes: [], severities: [], timeSpan: null };
+    setFilters(defaultFilters);
+    setToastMessage('Filters removed');
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 2000);
+  };
+
   useEffect(() => {
     const activeAlerts = getAllActiveAlerts();
     setAlertCount(activeAlerts.length);
+
+    // Expand the first card by default on load if nothing is expanded
+    if (filteredMeasurements.length > 0 && !expandedCardId && activeFilter === 'active') {
+      setExpandedCardId(filteredMeasurements[0].id);
+    }
 
     const interval = setInterval(() => {
       const newAlerts = getAllActiveAlerts();
@@ -179,6 +205,15 @@ export function ActiveAlertsFeed({ anomalyConfigs, severityConfigs, displaySetti
                   ? 'No active alerts at the moment. System operating normally.'
                   : 'No acknowledged alerts to display.'}
             </p>
+            {hasActiveFilters && (
+              <button
+                onClick={handleResetFilters}
+                className="mt-6 flex items-center gap-2 px-6 py-3 bg-foreground text-background rounded-xl font-bold text-sm shadow-lg shadow-black/10 active:scale-95 transition-all"
+              >
+                <RotateCcw size={14} strokeWidth={3} />
+                Reset all filters
+              </button>
+            )}
           </motion.div>
         ) : (
           <motion.div
@@ -218,6 +253,10 @@ export function ActiveAlertsFeed({ anomalyConfigs, severityConfigs, displaySetti
                     displaySettings={displaySettings}
                     onAcknowledge={handleAcknowledge}
                     sessionAckInfo={sessionAcked.get(measurement.id)}
+                    isExpanded={expandedCardId === measurement.id}
+                    onToggleExpand={(expanded) => setExpandedCardId(expanded ? measurement.id : null)}
+                    showLargeUnit={showLargeUnit}
+                    setShowLargeUnit={setShowLargeUnit}
                   />
                 </motion.div>
               ))}
@@ -226,11 +265,13 @@ export function ActiveAlertsFeed({ anomalyConfigs, severityConfigs, displaySetti
         )}
       </AnimatePresence>
 
+      <SavedToast visible={showToast} message={toastMessage} />
+
       <FilterDrawer
         isOpen={filterDrawerOpen}
         onClose={() => setFilterDrawerOpen(false)}
         filters={filters}
-        onApplyFilters={setFilters}
+        onApplyFilters={applyFilters}
         showTimeSpan={true}
       />
     </div>

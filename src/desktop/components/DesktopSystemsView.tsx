@@ -8,6 +8,8 @@ import { motion, AnimatePresence } from 'motion/react';
 interface DesktopSystemsViewProps {
   showLargeUnit: boolean;
   setShowLargeUnit: (val: boolean) => void;
+  showExactTime: boolean;
+  setShowExactTime: (val: boolean) => void;
   acknowledgedIds: Set<string>;
   onAcknowledge: (id: string) => void;
   displaySettings: DisplaySettings;
@@ -15,7 +17,7 @@ interface DesktopSystemsViewProps {
   severityConfigs: SeverityConfig[];
 }
 
-export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, acknowledgedIds, onAcknowledge, displaySettings, anomalyConfigs, severityConfigs }: DesktopSystemsViewProps) {
+export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, showExactTime, setShowExactTime, acknowledgedIds, onAcknowledge, displaySettings, anomalyConfigs, severityConfigs }: DesktopSystemsViewProps) {
   const [activeSystem, setActiveSystem] = useState<SystemType>('SURFACE_INSPECTION');
   const [filters, setFilters] = useState({
     system: 'All Systems', // This will be handled by the tabs mainly
@@ -24,6 +26,7 @@ export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, acknowledg
     time: 'Last 24 Hours',
     search: '',
   });
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
   const systems: { id: SystemType; label: string }[] = [
     { id: 'SURFACE_INSPECTION', label: 'Surface Inspection' },
@@ -131,9 +134,13 @@ export function DesktopSystemsView({ showLargeUnit, setShowLargeUnit, acknowledg
                   measurement={measurement} 
                   showLargeUnit={showLargeUnit} 
                   setShowLargeUnit={setShowLargeUnit} 
+                  showExactTime={showExactTime}
+                  setShowExactTime={setShowExactTime}
                   onAcknowledge={() => onAcknowledge(measurement.id)}
                   isSessionAck={acknowledgedIds.has(measurement.id)}
                   displaySettings={displaySettings}
+                  isExpanded={expandedCardId === measurement.id}
+                  onToggleExpand={(expanded) => setExpandedCardId(expanded ? measurement.id : null)}
                 />
               </motion.div>
             ))

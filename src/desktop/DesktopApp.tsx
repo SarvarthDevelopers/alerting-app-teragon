@@ -40,7 +40,16 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
 
   const [alertsView, setAlertsView] = useState<'active' | 'acknowledged'>('active');
   const [activeAlertsCount, setActiveAlertsCount] = useState(getAllActiveAlerts().length);
-  const [showLargeUnit, setShowLargeUnit] = useState(true);
+  const [showLargeUnit, setShowLargeUnit] = useState(() => localStorage.getItem('desktop_showLargeUnit') !== 'false');
+  const [showExactTime, setShowExactTime] = useState(() => localStorage.getItem('desktop_showExactTime') === 'true');
+
+  useEffect(() => {
+    localStorage.setItem('desktop_showLargeUnit', showLargeUnit.toString());
+  }, [showLargeUnit]);
+
+  useEffect(() => {
+    localStorage.setItem('desktop_showExactTime', showExactTime.toString());
+  }, [showExactTime]);
   const [acknowledgedIds, setAcknowledgedIds] = useState<Set<string>>(new Set());
   const [severityConfigs, setSeverityConfigs] = useState<SeverityConfig[]>(initialSeverityConfigs);
   const [anomalyConfigs, setAnomalyConfigs] = useState<AnomalyConfig[]>(initialAnomalyConfigs);
@@ -76,6 +85,8 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
             <DesktopAlertsFeed 
               showLargeUnit={showLargeUnit} 
               setShowLargeUnit={setShowLargeUnit} 
+              showExactTime={showExactTime}
+              setShowExactTime={setShowExactTime}
               acknowledgedIds={acknowledgedIds}
               onAcknowledge={handleAcknowledge}
               activeView={alertsView}
@@ -96,6 +107,8 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
             <DesktopSystemsView 
               showLargeUnit={showLargeUnit} 
               setShowLargeUnit={setShowLargeUnit} 
+              showExactTime={showExactTime}
+              setShowExactTime={setShowExactTime}
               acknowledgedIds={acknowledgedIds}
               onAcknowledge={handleAcknowledge}
               displaySettings={displaySettings}

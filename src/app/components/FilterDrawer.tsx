@@ -118,16 +118,22 @@ export function FilterDrawer({ isOpen, onClose, filters, onApplyFilters, showTim
                     <button
                       key={config.id}
                       onClick={() => toggleAnomalyType(config.sourceTypeKey)}
-                      className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${
+                      className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all duration-200 ${
                         localFilters.anomalyTypes.includes(config.sourceTypeKey)
-                          ? 'bg-primary/10 border-2 border-primary'
-                          : 'bg-muted border-2 border-transparent'
+                          ? 'bg-foreground/5 border-2 border-foreground'
+                          : 'bg-muted border-2 border-transparent hover:bg-muted/80'
                       }`}
                     >
-                      <span className="font-medium text-foreground">{config.displayName}</span>
-                      {localFilters.anomalyTypes.includes(config.sourceTypeKey) && (
-                        <Check size={20} className="text-primary" />
-                      )}
+                      <span className={`font-bold ${localFilters.anomalyTypes.includes(config.sourceTypeKey) ? 'text-foreground' : 'text-foreground/60'}`}>
+                        {config.displayName}
+                      </span>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 ${
+                        localFilters.anomalyTypes.includes(config.sourceTypeKey)
+                          ? 'bg-foreground scale-100'
+                          : 'bg-foreground/10 scale-90 opacity-0'
+                      }`}>
+                        <Check size={14} className="text-white" strokeWidth={4} />
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -137,23 +143,39 @@ export function FilterDrawer({ isOpen, onClose, filters, onApplyFilters, showTim
               <div>
                 <h3 className="font-semibold text-foreground mb-3">Severity</h3>
                 <div className="grid grid-cols-2 gap-2">
-                  {severityOptions.map(severity => (
-                    <button
-                      key={severity}
-                      onClick={() => toggleSeverity(severity)}
-                      className={`p-3 rounded-xl font-semibold transition-all ${
-                        localFilters.severities.includes(severity)
-                          ? 'shadow-[inset_0_0_0_3px_rgba(0,0,0,0.75)] opacity-100'
-                          : 'opacity-50'
-                      }`}
-                      style={{
-                        backgroundColor: getSeverityColor(severity),
-                        color: '#ffffff'
-                      }}
-                    >
-                      {severity}
-                    </button>
-                  ))}
+                  {severityOptions.map(severity => {
+                    const isSelected = localFilters.severities.includes(severity);
+                    return (
+                      <button
+                        key={severity}
+                        onClick={() => toggleSeverity(severity)}
+                        className={`relative p-3 rounded-2xl font-bold transition-all duration-200 flex items-center justify-center min-h-[52px] overflow-hidden border-2 ${
+                          isSelected
+                            ? 'border-foreground shadow-sm'
+                            : 'border-transparent bg-muted/40'
+                        }`}
+                        style={{
+                          backgroundColor: isSelected ? getSeverityColor(severity) : undefined,
+                          color: isSelected ? '#ffffff' : getSeverityColor(severity),
+                          borderColor: isSelected ? undefined : `${getSeverityColor(severity)}40`
+                        }}
+                      >
+                        <span className="text-xs uppercase tracking-widest">{severity}</span>
+                        <AnimatePresence>
+                          {isSelected && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              exit={{ scale: 0 }}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-sm"
+                            >
+                              <Check size={12} className="text-foreground" strokeWidth={5} />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

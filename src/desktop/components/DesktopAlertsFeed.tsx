@@ -10,6 +10,8 @@ import { Bell } from 'lucide-react';
 interface DesktopAlertsFeedProps {
   showLargeUnit: boolean;
   setShowLargeUnit: (val: boolean) => void;
+  showExactTime: boolean;
+  setShowExactTime: (val: boolean) => void;
   acknowledgedIds: Set<string>;
   onAcknowledge: (id: string) => void;
   activeView: 'active' | 'acknowledged';
@@ -19,7 +21,7 @@ interface DesktopAlertsFeedProps {
   severityConfigs: SeverityConfig[];
 }
 
-export function DesktopAlertsFeed({ showLargeUnit, setShowLargeUnit, acknowledgedIds, onAcknowledge, activeView, setActiveView, displaySettings, anomalyConfigs, severityConfigs }: DesktopAlertsFeedProps) {
+export function DesktopAlertsFeed({ showLargeUnit, setShowLargeUnit, showExactTime, setShowExactTime, acknowledgedIds, onAcknowledge, activeView, setActiveView, displaySettings, anomalyConfigs, severityConfigs }: DesktopAlertsFeedProps) {
   const [filters, setFilters] = useState({
     system: 'All Systems',
     anomalyType: 'All Types',
@@ -30,6 +32,7 @@ export function DesktopAlertsFeed({ showLargeUnit, setShowLargeUnit, acknowledge
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkResolving, setIsBulkResolving] = useState(false);
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
   const enterSelectionMode = () => { setIsSelectionMode(true); setSelectedIds(new Set()); };
   const exitSelectionMode = () => { setIsSelectionMode(false); setSelectedIds(new Set()); setIsBulkResolving(false); };
@@ -243,12 +246,16 @@ export function DesktopAlertsFeed({ showLargeUnit, setShowLargeUnit, acknowledge
                   measurement={measurement} 
                   showLargeUnit={showLargeUnit} 
                   setShowLargeUnit={setShowLargeUnit} 
+                  showExactTime={showExactTime}
+                  setShowExactTime={setShowExactTime}
                   onAcknowledge={() => onAcknowledge(measurement.id)}
                   isSessionAck={acknowledgedIds.has(measurement.id)}
                   displaySettings={displaySettings}
                   isSelectionMode={isSelectionMode}
                   isSelected={selectedIds.has(measurement.id)}
                   onToggleSelect={() => toggleSelection(measurement.id)}
+                  isExpanded={expandedCardId === measurement.id}
+                  onToggleExpand={(expanded) => setExpandedCardId(expanded ? measurement.id : null)}
                 />
               </motion.div>
             ))

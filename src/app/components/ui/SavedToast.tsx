@@ -3,9 +3,10 @@ import { CheckCircle2 } from 'lucide-react';
 
 interface SavedToastProps {
   visible: boolean;
+  message?: string;
 }
 
-export function SavedToast({ visible }: SavedToastProps) {
+export function SavedToast({ visible, message = "Settings saved" }: SavedToastProps) {
   return (
     <AnimatePresence>
       {visible && (
@@ -14,11 +15,11 @@ export function SavedToast({ visible }: SavedToastProps) {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 8, scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 420, damping: 28 }}
-          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[999] flex items-center gap-3 bg-foreground text-background px-6 py-4 rounded-2xl shadow-2xl shadow-black/20 pointer-events-none"
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-3 bg-foreground text-background px-6 py-4 rounded-2xl shadow-2xl shadow-black/20 pointer-events-none"
         >
           <CheckCircle2 size={16} className="text-primary shrink-0" />
           <span className="text-[11px] font-black uppercase tracking-widest whitespace-nowrap">
-            Settings saved
+            {message}
           </span>
         </motion.div>
       )}

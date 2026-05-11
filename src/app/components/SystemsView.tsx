@@ -7,9 +7,11 @@ interface SystemsViewProps {
   anomalyConfigs: AnomalyConfig[];
   severityConfigs: SeverityConfig[];
   displaySettings: DisplaySettingsType;
+  showLargeUnit: boolean;
+  setShowLargeUnit: (val: boolean) => void;
 }
 
-export function SystemsView({ anomalyConfigs, severityConfigs, displaySettings }: SystemsViewProps) {
+export function SystemsView({ anomalyConfigs, severityConfigs, displaySettings, showLargeUnit, setShowLargeUnit }: SystemsViewProps) {
   const [activeSystem, setActiveSystem] = useState<SystemType>('SURFACE_INSPECTION');
 
   const systems: { id: SystemType; label: string }[] = [
@@ -54,6 +56,8 @@ export function SystemsView({ anomalyConfigs, severityConfigs, displaySettings }
         anomalyConfigs={anomalyConfigs}
         severityConfigs={severityConfigs}
         displaySettings={displaySettings}
+        showLargeUnit={showLargeUnit}
+        setShowLargeUnit={setShowLargeUnit}
       />
     </div>
   );

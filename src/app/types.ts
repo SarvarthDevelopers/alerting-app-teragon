@@ -38,6 +38,7 @@ export interface Alert {
   updatedAt: string;
   acknowledgedBy?: string;
   acknowledgedAt?: string;
+  technicalDetails?: string;
 }
 
 export interface Measurement {

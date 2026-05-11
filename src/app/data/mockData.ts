@@ -60,6 +60,27 @@ export const anomalyConfigs: AnomalyConfig[] = [
 
 export const mockMeasurements: Measurement[] = [
   {
+    id: 'm23',
+    serialNumber: 'SN-98674',
+    system: 'SURFACE_INSPECTION',
+    timestamp: new Date(Date.now() - 1 * 60 * 1000).toISOString(),
+    productLength: 20000,
+    productType: 'Heavy Gauge Plate',
+    alerts: Array.from({ length: 18 }).map((_, i) => ({
+      id: `a_high_${i}`,
+      measurementId: 'm23',
+      anomalyType: i % 3 === 0 ? 'VISUAL_DEFECT' : i % 3 === 1 ? 'SURFACE_ROUGHNESS' : 'DIMENSIONAL_VARIANCE',
+      startPos: 500 + (i * 1000),
+      length: 200 + (Math.random() * 300),
+      severity: i % 5 === 0 ? 'CRITICAL' : i % 5 === 1 ? 'HIGH' : 'MEDIUM',
+      currentState: 'NEW',
+      priority: i % 5 === 0 ? 1 : 2,
+      createdAt: new Date(Date.now() - 1 * 60 * 1000).toISOString(),
+      updatedAt: new Date(Date.now() - 1 * 60 * 1000).toISOString(),
+      technicalDetails: i % 4 === 0 ? `High-density anomaly #${i+1}: Detailed inspection required due to localized cluster pattern.` : undefined
+    }))
+  },
+  {
     id: 'm1',
     serialNumber: 'SN-98652',
     system: 'SURFACE_INSPECTION',
@@ -77,7 +98,8 @@ export const mockMeasurements: Measurement[] = [
         currentState: 'NEW',
         priority: 1,
         createdAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 2 * 60 * 1000).toISOString()
+        updatedAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
+        technicalDetails: 'Thermal gradient deviation detected. Surface temperature reached 1240°C, exceeding safety threshold by 45°C. Immediate cooling adjustment required.'
       },
       {
         id: 'a2',
@@ -111,7 +133,8 @@ export const mockMeasurements: Measurement[] = [
         currentState: 'NEW',
         priority: 2,
         createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 1 * 60 * 1000).toISOString()
+        updatedAt: new Date(Date.now() - 1 * 60 * 1000).toISOString(),
+        technicalDetails: 'Edge crack pattern identified. Correlation found with roll vibration sensor RSV-04. Potential bearing fatigue in Finishing Stand 2.'
       }
     ]
   },

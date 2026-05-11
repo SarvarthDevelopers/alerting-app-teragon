@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from 'react-router';
 import App from "./app/App";
@@ -7,16 +7,28 @@ import { Login } from "./components/Login";
 import "./styles/index.css";
 
 function Main() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('isLoggedIn') === 'true';
+  });
   const isDesktop = window.location.pathname.startsWith('/desktop');
 
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+    localStorage.setItem('isLoggedIn', 'true');
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('isLoggedIn');
+  };
+
   if (!isAuthenticated) {
-    return <Login onLogin={() => setIsAuthenticated(true)} isDesktop={isDesktop} />;
+    return <Login onLogin={handleLogin} isDesktop={isDesktop} />;
   }
 
   return isDesktop
-    ? <BrowserRouter><DesktopApp onLogout={() => setIsAuthenticated(false)} /></BrowserRouter>
-    : <App onLogout={() => setIsAuthenticated(false)} />;
+    ? <BrowserRouter><DesktopApp onLogout={handleLogout} /></BrowserRouter>
+    : <App onLogout={handleLogout} />;
 }
 
 createRoot(document.getElementById("root")!).render(<Main />);

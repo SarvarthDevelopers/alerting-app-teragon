@@ -1,46 +1,70 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Measurement, Severity, DisplaySettings } from '../../app/types';
 import { getAnomalyConfig, getSystemDisplayName } from '../../app/data/mockData';
 import { SeverityBadge } from '../../app/components/AlertBadge';
 import { getRelativeTime, formatExpandedTime, getSeverityColor } from '../utils/formatters';
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2, History, X, Check } from 'lucide-react';
+import { CheckCircle2, History, X, Check, Info, FileText, ArrowLeft } from 'lucide-react';
 
 interface DesktopAlertCardProps {
   measurement: Measurement;
   showLargeUnit: boolean;
   setShowLargeUnit: (val: boolean) => void;
+  showExactTime: boolean;
+  setShowExactTime: (val: boolean) => void;
   onAcknowledge?: () => void;
   isSessionAck?: boolean;
   displaySettings: DisplaySettings;
   isSelectionMode?: boolean;
   isSelected?: boolean;
   onToggleSelect?: () => void;
+  isExpanded?: boolean;
+  onToggleExpand?: (expanded: boolean) => void;
 }
 
 export function DesktopAlertCard({ 
   measurement, 
   showLargeUnit, 
   setShowLargeUnit,
+  showExactTime,
+  setShowExactTime,
   onAcknowledge,
   isSessionAck,
   displaySettings,
   isSelectionMode = false,
   isSelected = false,
   onToggleSelect,
+  isExpanded: externalIsExpanded,
+  onToggleExpand: externalOnToggleExpand,
 }: DesktopAlertCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [internalIsExpanded, setInternalIsExpanded] = useState(false);
+  const isExpanded = externalIsExpanded !== undefined ? externalIsExpanded : internalIsExpanded;
+  const setIsExpanded = (val: boolean) => {
+    if (externalOnToggleExpand) {
+      externalOnToggleExpand(val);
+    } else {
+      setInternalIsExpanded(val);
+    }
+  };
+
   const [scrubberPos, setScrubberPos] = useState<number | null>(null);
-  const [showExactTime, setShowExactTime] = useState(false);
   const [isConfirmHighlight, setIsConfirmHighlight] = useState(false);
   const [hoveredAlertId, setHoveredAlertId] = useState<string | null>(null);
   const [isResolving, setIsResolving] = useState(false);
+  const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const rulerRef = useRef<HTMLDivElement>(null);
 
   const triggerHighlight = () => {
     setIsConfirmHighlight(true);
     setTimeout(() => setIsConfirmHighlight(false), 600);
   };
+
+  // Reset selected detail if card collapses
+  useEffect(() => {
+    if (!isExpanded) {
+      setSelectedAlertId(null);
+    }
+  }, [isExpanded]);
 
   const handleResolve = () => {
     setIsResolving(true);
@@ -297,36 +321,83 @@ export function DesktopAlertCard({
               </div>
 
               <div className="flex flex-wrap items-center gap-2 mt-1">
-                {measurement.alerts.map((alert) => {
-                  const config = getAnomalyConfig(alert.anomalyType);
-                  const endPos = Math.min(alert.startPos + alert.length, measurement.productLength);
-                  const isHovered = hoveredAlertId === alert.id;
+                {(() => {
+                  const maxDisplay = 4;
+                  const displayedAlerts = measurement.alerts.slice(0, maxDisplay);
+                  const remainingCount = measurement.alerts.length - maxDisplay;
+
                   return (
-                    <motion.div 
-                      key={alert.id} 
-                      onMouseEnter={() => setHoveredAlertId(alert.id)}
-                      onMouseLeave={() => setHoveredAlertId(null)}
-                      animate={{
-                        scale: isHovered ? 1.05 : 1,
-                        backgroundColor: isHovered ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 0.05)',
-                        borderColor: isHovered ? 'rgba(0, 0, 0, 1)' : 'rgba(0, 0, 0, 0.05)',
-                        opacity: hoveredAlertId && !isHovered ? 0.6 : 1,
-                      }}
-                      className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border cursor-default"
-                    >
-                      <div 
-                        className="w-2 h-2 rounded-full shadow-sm" 
-                        style={{ backgroundColor: getSeverityColor(alert.severity) }} 
-                      />
-                      <span className="text-[10px] font-black text-foreground/80 tracking-tight">
-                        {config?.displayName}
-                      </span>
-                      <span className="text-[10px] font-bold text-muted-foreground tabular-nums">
-                        {alert.startPos} - {endPos}mm
-                      </span>
-                    </motion.div>
+                    <>
+                      {displayedAlerts.map((alert) => {
+                        const config = getAnomalyConfig(alert.anomalyType);
+                        const endPos = Math.min(alert.startPos + alert.length, measurement.productLength);
+                        const isHovered = hoveredAlertId === alert.id;
+                        const hasDetails = !!alert.technicalDetails;
+                        const isSelectedForDetail = selectedAlertId === alert.id;
+
+                        return (
+                          <motion.div 
+                            key={alert.id} 
+                            onMouseEnter={() => setHoveredAlertId(alert.id)}
+                            onMouseLeave={() => setHoveredAlertId(null)}
+                            onClick={(e) => {
+                              if (hasDetails) {
+                                e.stopPropagation();
+                                setSelectedAlertId(alert.id);
+                                if (!isExpanded) setIsExpanded(true);
+                              }
+                            }}
+                            animate={{
+                              backgroundColor: isSelectedForDetail 
+                                ? 'rgba(0, 0, 0, 0.08)' 
+                                : isHovered 
+                                  ? 'rgba(255, 255, 255, 1)' 
+                                  : 'rgba(0, 0, 0, 0.05)',
+                              borderColor: isSelectedForDetail 
+                                ? 'rgba(0, 0, 0, 1)' 
+                                : isHovered 
+                                  ? 'rgba(0, 0, 0, 1)' 
+                                  : 'rgba(0, 0, 0, 0.05)',
+                              opacity: hoveredAlertId && !isHovered ? 0.6 : 1,
+                            }}
+                            className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition-all ${
+                              hasDetails ? 'cursor-pointer' : 'cursor-default'
+                            }`}
+                          >
+                            <div 
+                              className="w-2 h-2 rounded-full shadow-sm" 
+                              style={{ backgroundColor: getSeverityColor(alert.severity) }} 
+                            />
+                            <span className="text-[10px] font-black text-foreground/80 tracking-tight">
+                              {config?.displayName}
+                            </span>
+                            <span className="text-[10px] font-bold text-muted-foreground tabular-nums">
+                              {alert.startPos} - {endPos}mm
+                            </span>
+                            {hasDetails && (
+                              <div className="ml-1 w-4 h-4 rounded-full bg-black/5 flex items-center justify-center group-hover:bg-black/10 transition-colors">
+                                <Info size={10} className={`${isSelectedForDetail ? 'text-black' : 'text-muted-foreground'}`} />
+                              </div>
+                            )}
+                          </motion.div>
+                        );
+                      })}
+                      {remainingCount > 0 && (
+                        <div 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsExpanded(true);
+                          }}
+                          className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-dashed border-foreground/20 bg-foreground/5 cursor-pointer hover:bg-foreground/10 transition-colors"
+                        >
+                          <span className="text-[10px] font-black text-foreground tracking-tight">
+                            + {remainingCount} MORE
+                          </span>
+                        </div>
+                      )}
+                    </>
                   );
-                })}
+                })()}
               </div>
             </>
           )}
@@ -368,11 +439,12 @@ export function DesktopAlertCard({
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                 >
-                  {!isExpanded ? (
+                  {(!isExpanded || selectedAlertId !== null) ? (
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsExpanded(true);
+                        setSelectedAlertId(null); // Clear detail if they want to acknowledge
                       }}
                       className={`mt-2 w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
                         isAcknowledged
@@ -409,9 +481,97 @@ export function DesktopAlertCard({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-            className="border-t border-border/50 bg-muted/5 overflow-hidden"
+            className="border-t border-border/50 bg-muted/5 overflow-hidden flex flex-col"
           >
-            {isAcknowledged ? (
+            {/* High Density Browser (Only if many alerts) */}
+            {measurement.alerts.length > 5 && (
+              <div className="px-6 py-4 border-b border-black/5 bg-black/[0.02]">
+                <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-black/10">
+                  {measurement.alerts.map((alert) => {
+                    const isSelected = selectedAlertId === alert.id;
+                    const config = getAnomalyConfig(alert.anomalyType);
+                    return (
+                      <button
+                        key={alert.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedAlertId(isSelected ? null : alert.id);
+                        }}
+                        className={`flex-none flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all ${
+                          isSelected 
+                            ? 'bg-foreground border-foreground' 
+                            : 'bg-white border-black/10 hover:border-black/30'
+                        }`}
+                      >
+                        <div 
+                          className={`w-1.5 h-1.5 rounded-full shadow-sm ${isSelected ? 'bg-white' : ''}`} 
+                          style={isSelected ? {} : { backgroundColor: getSeverityColor(alert.severity) }} 
+                        />
+                        <span className={`text-[10px] font-black tracking-tight ${isSelected ? 'text-background' : 'text-foreground/80'}`}>
+                          {config?.displayName}
+                        </span>
+                        <span className={`text-[10px] font-bold tabular-nums ${isSelected ? 'text-background/60' : 'text-muted-foreground'}`}>
+                          {alert.startPos} - {Math.min(alert.startPos + alert.length, measurement.productLength)}mm
+                        </span>
+                        {!!alert.technicalDetails && (
+                          <div className={`ml-1 w-4 h-4 rounded-full flex items-center justify-center transition-colors ${isSelected ? 'bg-white/20' : 'bg-black/5'}`}>
+                            <Info size={10} className={isSelected ? 'text-white' : 'text-muted-foreground'} />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {selectedAlertId ? (
+              <div className="bg-black/5 border-t border-black/15 h-[80px]">
+                <div className="h-full flex items-stretch">
+                  {/* Selection Rail Placeholder */}
+                  <AnimatePresence>
+                    {isSelectionMode && (
+                      <motion.div
+                        initial={{ width: 0, opacity: 0 }}
+                        animate={{ width: 48, opacity: 1 }}
+                        exit={{ width: 0, opacity: 0 }}
+                        className="border-r border-black/15 shrink-0"
+                      />
+                    )}
+                  </AnimatePresence>
+
+                  {/* Left Column: Identity Placeholder */}
+                  <div className="w-64 px-6 border-r border-black/15 h-full flex flex-col justify-center">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-1">
+                      {getAnomalyConfig(measurement.alerts.find(a => a.id === selectedAlertId)!.anomalyType)?.displayName}
+                    </span>
+                    <span className="text-[11px] font-bold text-muted-foreground font-mono">
+                      {measurement.alerts.find(a => a.id === selectedAlertId)!.startPos} - {measurement.alerts.find(a => a.id === selectedAlertId)!.startPos + measurement.alerts.find(a => a.id === selectedAlertId)!.length}mm
+                    </span>
+                  </div>
+
+                  {/* Middle Column: Technical Detail */}
+                  <div className="flex-1 px-8 py-4 border-r border-black/15 h-full flex items-center">
+                    <p className="text-sm font-medium text-foreground/80 italic line-clamp-2">
+                      {measurement.alerts.find(a => a.id === selectedAlertId)!.technicalDetails}
+                    </p>
+                  </div>
+
+                  {/* Right Column: Actions Placeholder */}
+                  <div className="w-52 px-6 h-full flex items-center justify-center">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsExpanded(false);
+                        setTimeout(() => setSelectedAlertId(null), 400);
+                      }}
+                      className="text-[10px] font-black uppercase tracking-widest hover:underline"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : isAcknowledged ? (
               <div className="p-8 flex items-center justify-between max-w-5xl mx-auto gap-12">
                 <div className="flex items-center gap-6 flex-1">
                   <div className="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center shrink-0">
