@@ -52,6 +52,7 @@ export function DesktopAlertCard({
   const [hoveredAlertId, setHoveredAlertId] = useState<string | null>(null);
   const [isResolving, setIsResolving] = useState(false);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+  const [showAcknowledgeForm, setShowAcknowledgeForm] = useState(false);
   const rulerRef = useRef<HTMLDivElement>(null);
 
   const triggerHighlight = () => {
@@ -63,6 +64,7 @@ export function DesktopAlertCard({
   useEffect(() => {
     if (!isExpanded) {
       setSelectedAlertId(null);
+      setShowAcknowledgeForm(false);
     }
   }, [isExpanded]);
 
@@ -345,6 +347,7 @@ export function DesktopAlertCard({
                                 e.stopPropagation();
                                 setSelectedAlertId(alert.id);
                                 if (!isExpanded) setIsExpanded(true);
+                                setShowAcknowledgeForm(false);
                               }
                             }}
                             animate={{
@@ -387,6 +390,8 @@ export function DesktopAlertCard({
                           onClick={(e) => {
                             e.stopPropagation();
                             setIsExpanded(true);
+                            setSelectedAlertId(null);
+                            setShowAcknowledgeForm(false);
                           }}
                           className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-dashed border-foreground/20 bg-foreground/5 cursor-pointer hover:bg-foreground/10 transition-colors"
                         >
@@ -439,33 +444,33 @@ export function DesktopAlertCard({
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                 >
-                  {(!isExpanded || selectedAlertId !== null) ? (
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!isExpanded) {
                         setIsExpanded(true);
-                        setSelectedAlertId(null); // Clear detail if they want to acknowledge
-                      }}
-                      className={`mt-2 w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
-                        isAcknowledged
-                          ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100'
-                          : 'bg-[#eeeeee] text-foreground hover:bg-black hover:text-white shadow-sm hover:shadow-black/5'
-                      }`}
-                    >
-                      {isAcknowledged ? 'Acknowledged' : 'Acknowledge'}
-                      <CheckCircle2 size={14} className={isAcknowledged ? 'text-emerald-500' : ''} />
-                    </button>
-                  ) : (
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        triggerHighlight();
-                      }}
-                      className="mt-2 w-full h-[44px] flex items-center justify-center bg-black/5 rounded-2xl border border-black/5 cursor-pointer hover:bg-black/10 transition-colors"
-                    >
-                       <p className="text-[10px] font-black text-black/40 uppercase tracking-widest">Awaiting</p>
-                    </button>
-                  )}
+                        setShowAcknowledgeForm(true);
+                        setSelectedAlertId(null);
+                      } else {
+                        if (showAcknowledgeForm) {
+                          triggerHighlight();
+                        } else {
+                          setShowAcknowledgeForm(true);
+                          setSelectedAlertId(null);
+                        }
+                      }
+                    }}
+                    className={`mt-2 w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
+                      isAcknowledged
+                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100'
+                        : (isExpanded && showAcknowledgeForm)
+                        ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+                        : 'bg-[#eeeeee] text-foreground hover:bg-black hover:text-white shadow-sm hover:shadow-black/5'
+                    }`}
+                  >
+                    {isAcknowledged ? 'Acknowledged' : (isExpanded && showAcknowledgeForm) ? 'Confirm Resolution' : 'Acknowledge'}
+                    <CheckCircle2 size={14} className={(isAcknowledged || (isExpanded && showAcknowledgeForm)) ? 'text-white' : ''} />
+                  </button>
                 </motion.div>
               </AnimatePresence>
             </div>
@@ -493,15 +498,16 @@ export function DesktopAlertCard({
                     return (
                       <button
                         key={alert.id}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedAlertId(isSelected ? null : alert.id);
-                        }}
                         className={`flex-none flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all ${
                           isSelected 
                             ? 'bg-foreground border-foreground' 
                             : 'bg-white border-black/10 hover:border-black/30'
                         }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedAlertId(isSelected ? null : alert.id);
+                          setShowAcknowledgeForm(false);
+                        }}
                       >
                         <div 
                           className={`w-1.5 h-1.5 rounded-full shadow-sm ${isSelected ? 'bg-white' : ''}`} 
@@ -526,8 +532,8 @@ export function DesktopAlertCard({
             )}
             {selectedAlertId ? (
               <div className="bg-black/5 border-t border-black/15 h-[80px]">
+                {/* ... existing alert detail UI ... */}
                 <div className="h-full flex items-stretch">
-                  {/* Selection Rail Placeholder */}
                   <AnimatePresence>
                     {isSelectionMode && (
                       <motion.div
@@ -539,7 +545,6 @@ export function DesktopAlertCard({
                     )}
                   </AnimatePresence>
 
-                  {/* Left Column: Identity Placeholder */}
                   <div className="w-64 px-6 border-r border-black/15 h-full flex flex-col justify-center">
                     <span className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-1">
                       {getAnomalyConfig(measurement.alerts.find(a => a.id === selectedAlertId)!.anomalyType)?.displayName}
@@ -549,20 +554,17 @@ export function DesktopAlertCard({
                     </span>
                   </div>
 
-                  {/* Middle Column: Technical Detail */}
                   <div className="flex-1 px-8 py-4 border-r border-black/15 h-full flex items-center">
                     <p className="text-sm font-medium text-foreground/80 italic line-clamp-2">
                       {measurement.alerts.find(a => a.id === selectedAlertId)!.technicalDetails}
                     </p>
                   </div>
 
-                  {/* Right Column: Actions Placeholder */}
                   <div className="w-52 px-6 h-full flex items-center justify-center">
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
-                        setIsExpanded(false);
-                        setTimeout(() => setSelectedAlertId(null), 400);
+                        setSelectedAlertId(null);
                       }}
                       className="text-[10px] font-black uppercase tracking-widest hover:underline"
                     >
@@ -571,68 +573,67 @@ export function DesktopAlertCard({
                   </div>
                 </div>
               </div>
-            ) : isAcknowledged ? (
+            ) : showAcknowledgeForm ? (
               <div className="p-8 flex items-center justify-between max-w-5xl mx-auto gap-12">
                 <div className="flex items-center gap-6 flex-1">
-                  <div className="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center shrink-0">
-                    <CheckCircle2 size={28} className="text-emerald-500" />
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${isAcknowledged ? 'bg-emerald-500/10' : 'bg-black/5'}`}>
+                    <CheckCircle2 size={28} className={isAcknowledged ? 'text-emerald-500' : 'text-black opacity-30'} />
                   </div>
                   <div>
-                    <h4 className="text-lg font-black text-foreground tracking-tight">Resolution Details</h4>
+                    <h4 className="text-lg font-black text-foreground tracking-tight">
+                      {isAcknowledged ? 'Resolution Details' : 'Confirm Acknowledgment'}
+                    </h4>
                     <p className="text-xs text-muted-foreground font-medium mt-1">
-                      This measurement was acknowledged by <span className="text-foreground font-bold">John Supervisor</span> on {new Date(measurement.timestamp).toLocaleDateString()} at {new Date(measurement.timestamp).toLocaleTimeString()}.
+                      {isAcknowledged 
+                        ? <>This measurement was acknowledged by <span className="text-foreground font-bold">John Supervisor</span> on {new Date(measurement.timestamp).toLocaleDateString()} at {new Date(measurement.timestamp).toLocaleTimeString()}.</>
+                        : `Validated by supervisor. Acknowledging ${measurement.alerts.length} anomalies for ${measurement.serialNumber}.`
+                      }
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-4">
+                  {!isAcknowledged && (
+                    <motion.button 
+                      animate={isConfirmHighlight ? { scale: [1, 1.05, 1], filter: ['brightness(1)', 'brightness(1.2)', 'brightness(1)'] } : {}}
+                      transition={{ duration: 0.4, repeat: 1 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleResolve();
+                      }}
+                      className="px-8 py-3 rounded-xl bg-[#10b981] text-white text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-emerald-500/20 hover:scale-[1.05] active:scale-95 transition-all"
+                    >
+                      Confirm & Resolve
+                    </motion.button>
+                  )}
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
-                      setIsExpanded(false);
+                      if (isAcknowledged) {
+                        setIsExpanded(false);
+                      } else {
+                        setShowAcknowledgeForm(false);
+                      }
                     }}
-                    className="px-8 py-3 rounded-xl bg-card border border-border text-[10px] font-black uppercase tracking-widest hover:border-black transition-all"
+                    className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                      isAcknowledged 
+                        ? 'bg-card border border-border hover:border-black' 
+                        : 'bg-red-50 text-red-500 border border-red-100 hover:bg-red-100'
+                    }`}
                   >
-                    Close Details
+                    {isAcknowledged ? 'Close Details' : 'Cancel'}
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="p-8 flex items-center justify-between max-w-5xl mx-auto gap-12">
-                <div className="flex items-center gap-6 flex-1">
-                  <div className="w-14 h-14 bg-black/5 rounded-2xl flex items-center justify-center shrink-0">
-                    <CheckCircle2 size={28} className="text-black opacity-30" />
-                  </div>
-                  <div>
-                    <h4 className="text-lg font-black text-foreground tracking-tight">Confirm Acknowledgment</h4>
-                    <p className="text-xs text-muted-foreground font-medium mt-1">
-                      Validated by supervisor. Acknowledging {measurement.alerts.length} anomalies for {measurement.serialNumber}.
-                    </p>
-                  </div>
+              <div className="p-12 flex flex-col items-center justify-center text-center">
+                <div className="w-16 h-16 bg-black/5 rounded-3xl flex items-center justify-center mb-4 text-black/20">
+                  <Info size={32} />
                 </div>
-
-                <div className="flex items-center gap-4">
-                <motion.button 
-                  animate={isConfirmHighlight ? { scale: [1, 1.05, 1], filter: ['brightness(1)', 'brightness(1.2)', 'brightness(1)'] } : {}}
-                  transition={{ duration: 0.4, repeat: 1 }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleResolve();
-                  }}
-                  className="px-8 py-3 rounded-xl bg-[#10b981] text-white text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-emerald-500/20 hover:scale-[1.05] active:scale-95 transition-all"
-                >
-                  Confirm & Resolve
-                </motion.button>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsExpanded(false);
-                    }}
-                    className="px-6 py-3 rounded-xl bg-red-50 text-red-500 border border-red-100 text-[10px] font-black uppercase tracking-widest hover:bg-red-100 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
+                <h4 className="text-sm font-black text-foreground uppercase tracking-widest">Anomaly Insight Explorer</h4>
+                <p className="text-xs text-muted-foreground mt-2 max-w-xs">
+                  Select an anomaly from the timeline above to view technical details, or click Acknowledge to resolve this measurement.
+                </p>
               </div>
             )}
           </motion.div>
