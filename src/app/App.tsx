@@ -152,7 +152,7 @@ export default function App({ onLogout }: AppProps) {
 
   return (
     <div 
-      className="min-h-screen bg-muted/20 md:flex md:items-center md:justify-center md:p-2"
+      className="h-[100dvh] w-full bg-muted/20 md:flex md:items-center md:justify-center md:p-2"
       onWheel={(e) => {
         // Forward wheel events to main container if not hovering it directly
         if (mainRef.current && !mainRef.current.contains(e.target as Node)) {
@@ -160,7 +160,7 @@ export default function App({ onLogout }: AppProps) {
         }
       }}
     >
-      <div className="w-full max-w-[480px] h-[100dvh] md:h-[96vh] bg-background flex flex-col relative md:rounded-2xl md:border-4 md:border-card md:shadow-xl overflow-hidden">
+      <div className="w-full max-w-[480px] h-full md:h-[96vh] bg-background flex flex-col relative md:rounded-2xl md:border-4 md:border-card md:shadow-xl overflow-hidden">
         <motion.header
           initial={false}
           animate={{
