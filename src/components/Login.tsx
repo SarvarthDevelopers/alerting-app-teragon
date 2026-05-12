@@ -41,121 +41,123 @@ export function Login({ onLogin, isDesktop = false }: LoginProps) {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col bg-background p-8 md:items-center md:justify-center">
+    <div className="min-h-[100dvh] w-full flex flex-col bg-background p-8 md:items-center md:justify-center">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className="w-full max-w-[400px] flex flex-col"
+        className="w-full max-w-[400px] flex flex-col flex-1 mx-auto"
       >
-        <div className="flex flex-col items-center mb-8 md:mb-12 text-center">
-          <img src={logo} alt="Pulse By Teragon Logo" className="h-10 md:h-12 w-auto mb-8 md:mb-10 ml-[-12px] md:ml-[-14px]" />
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight mb-1.5">Sign in</h1>
-          <p className="text-muted-foreground font-medium text-base md:text-lg">Use your work account to continue.</p>
-        </div>
-
-        <form onSubmit={handleSubmit} noValidate className="space-y-5 md:space-y-6">
-          <div className="space-y-1.5">
-            <label className={`text-[12px] md:text-[13px] font-bold ml-0.5 uppercase tracking-wider transition-colors ${error && error.includes('Email') ? 'text-destructive' : 'text-foreground/40'}`}>
-              Email Address
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => { setEmail(e.target.value); setError(null); }}
-              placeholder="name@company.com"
-              className={`w-full bg-muted/10 border rounded-xl md:rounded-2xl py-3.5 px-4 md:py-4 md:px-5 text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 transition-all font-medium text-base ${
-                error && error.includes('Email')
-                  ? 'border-destructive border-2 focus:ring-destructive/20 focus:border-destructive' 
-                  : 'border-foreground/20 focus:ring-foreground/20 focus:border-foreground'
-              }`}
-            />
-            <AnimatePresence>
-              {error && error.includes('Email') && (
-                <motion.p
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }}
-                  className="text-[12px] font-bold text-destructive ml-1 mt-1.5 flex items-center gap-1"
-                >
-                  <span className="w-1 h-1 bg-destructive rounded-full" />
-                  {error}
-                </motion.p>
-              )}
-            </AnimatePresence>
+        <div className="flex-1 flex flex-col justify-center mb-8 md:mb-0">
+          <div className="flex flex-col items-center mb-8 md:mb-12 text-center">
+            <img src={logo} alt="Pulse By Teragon Logo" className="h-10 md:h-12 w-auto mb-8 md:mb-10 ml-[-12px] md:ml-[-14px]" />
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight mb-1.5">Sign in</h1>
+            <p className="text-muted-foreground font-medium text-base md:text-lg">Use your work account to continue.</p>
           </div>
 
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-center px-0.5">
-              <label className={`text-[12px] md:text-[13px] font-bold uppercase tracking-wider transition-colors ${error && error.includes('password') ? 'text-destructive' : 'text-foreground/40'}`}>
-                Password
+          <form onSubmit={handleSubmit} noValidate className="space-y-5 md:space-y-6">
+            <div className="space-y-1.5">
+              <label className={`text-[12px] md:text-[13px] font-bold ml-0.5 uppercase tracking-wider transition-colors ${error && error.includes('Email') ? 'text-destructive' : 'text-foreground/40'}`}>
+                Email Address
               </label>
-              <button type="button" className="text-[12px] md:text-[13px] font-bold text-foreground hover:opacity-60 underline transition-opacity underline-offset-2">Forgot?</button>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setError(null); }}
+                placeholder="name@company.com"
+                className={`w-full bg-muted/10 border rounded-xl md:rounded-2xl py-3.5 px-4 md:py-4 md:px-5 text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 transition-all font-medium text-base ${
+                  error && error.includes('Email')
+                    ? 'border-destructive border-2 focus:ring-destructive/20 focus:border-destructive' 
+                    : 'border-foreground/20 focus:ring-foreground/20 focus:border-foreground'
+                }`}
+              />
+              <AnimatePresence>
+                {error && error.includes('Email') && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="text-[12px] font-bold text-destructive ml-1 mt-1.5 flex items-center gap-1"
+                  >
+                    <span className="w-1 h-1 bg-destructive rounded-full" />
+                    {error}
+                  </motion.p>
+                )}
+              </AnimatePresence>
             </div>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => { setPassword(e.target.value); setError(null); }}
-              placeholder="••••••••"
-              className={`w-full bg-muted/10 border rounded-xl md:rounded-2xl py-3.5 px-4 md:py-4 md:px-5 text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 transition-all font-medium text-base ${
-                error && error.includes('password')
-                  ? 'border-destructive border-2 focus:ring-destructive/20 focus:border-destructive' 
-                  : 'border-foreground/20 focus:ring-foreground/20 focus:border-foreground'
-              }`}
-            />
-            <AnimatePresence>
-              {error && error.includes('password') && (
-                <motion.p
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }}
-                  className="text-[12px] font-bold text-destructive ml-1 mt-1.5 flex items-center gap-1"
-                >
-                  <span className="w-1 h-1 bg-destructive rounded-full" />
-                  {error}
-                </motion.p>
-              )}
-            </AnimatePresence>
+
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center px-0.5">
+                <label className={`text-[12px] md:text-[13px] font-bold uppercase tracking-wider transition-colors ${error && error.includes('password') ? 'text-destructive' : 'text-foreground/40'}`}>
+                  Password
+                </label>
+                <button type="button" className="text-[12px] md:text-[13px] font-bold text-foreground hover:opacity-60 underline transition-opacity underline-offset-2">Forgot?</button>
+              </div>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); setError(null); }}
+                placeholder="••••••••"
+                className={`w-full bg-muted/10 border rounded-xl md:rounded-2xl py-3.5 px-4 md:py-4 md:px-5 text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 transition-all font-medium text-base ${
+                  error && error.includes('password')
+                    ? 'border-destructive border-2 focus:ring-destructive/20 focus:border-destructive' 
+                    : 'border-foreground/20 focus:ring-foreground/20 focus:border-foreground'
+                }`}
+              />
+              <AnimatePresence>
+                {error && error.includes('password') && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="text-[12px] font-bold text-destructive ml-1 mt-1.5 flex items-center gap-1"
+                  >
+                    <span className="w-1 h-1 bg-destructive rounded-full" />
+                    {error}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              disabled={isLoading}
+              className="w-full bg-primary text-primary-foreground font-bold py-4 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-primary/5 mt-2"
+            >
+              <AnimatePresence mode="wait">
+                {isLoading ? (
+                  <motion.div
+                    key="loading"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex items-center gap-2"
+                  >
+                    <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                  </motion.div>
+                ) : (
+                  <motion.span
+                    key="normal"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-base md:text-lg"
+                  >
+                    Continue
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
+          </form>
+
+          <div className="mt-8 md:mt-12 text-center">
+            <p className="text-sm text-muted-foreground font-medium">
+              Need access? <button className="text-foreground font-bold hover:underline underline-offset-2">Request account</button>
+            </p>
           </div>
-
-          <motion.button
-            whileTap={{ scale: 0.98 }}
-            disabled={isLoading}
-            className="w-full bg-primary text-primary-foreground font-bold py-4 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-primary/5 mt-2"
-          >
-            <AnimatePresence mode="wait">
-              {isLoading ? (
-                <motion.div
-                  key="loading"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center gap-2"
-                >
-                  <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                </motion.div>
-              ) : (
-                <motion.span
-                  key="normal"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="text-base md:text-lg"
-                >
-                  Continue
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </motion.button>
-        </form>
-
-        <div className="mt-8 md:mt-12 text-center">
-          <p className="text-sm text-muted-foreground font-medium">
-            Need access? <button className="text-foreground font-bold hover:underline underline-offset-2">Request account</button>
-          </p>
         </div>
 
-        <div className="mt-auto md:mt-16 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 opacity-50">
+        <div className="mt-auto pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 opacity-50 shrink-0">
           <span className="text-[11px] md:text-[12px] font-bold text-muted-foreground uppercase tracking-widest">© 2026 Teragon Systems</span>
           <div className="flex gap-5">
             <button className="text-[11px] md:text-[12px] font-bold text-muted-foreground hover:text-foreground uppercase tracking-widest">Privacy</button>

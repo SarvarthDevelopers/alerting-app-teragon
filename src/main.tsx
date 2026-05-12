@@ -41,21 +41,9 @@ function Main() {
     </Suspense>
   );
 }
-// Mobile PWA Setup
+
+// Mobile PWA Setup - Service Worker Registration
 if (!window.location.pathname.startsWith('/desktop')) {
-  // Inject Manifest
-  const manifestLink = document.createElement('link');
-  manifestLink.rel = 'manifest';
-  manifestLink.href = '/manifest.json';
-  document.head.appendChild(manifestLink);
-
-  // Inject Theme Color
-  const themeMeta = document.createElement('meta');
-  themeMeta.name = 'theme-color';
-  themeMeta.content = '#09090b';
-  document.head.appendChild(themeMeta);
-
-  // Register Service Worker for offline/install capabilities
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js').catch((err) => {
