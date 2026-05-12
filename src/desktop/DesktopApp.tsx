@@ -13,7 +13,7 @@ import {
 import { AnomalyConfig, SeverityConfig, DisplaySettings, User } from '../app/types';
 import { users as initialUsers } from '../app/data/settingsData';
 import { motion, AnimatePresence } from 'motion/react';
-import { Bell, Activity, Settings, Search, User as UserIcon } from 'lucide-react';
+import { Bell, Activity, Settings, Search, User as UserIcon, RefreshCw } from 'lucide-react';
 import { getAccessibleColor } from '../app/utils/colorUtils';
 import { SavedToast } from '../app/components/ui/SavedToast';
 
@@ -71,6 +71,33 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [toast, setToast] = useState<{ visible: boolean; message: string }>({ visible: false, message: '' });
   const toastTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const [connectionStatus, setConnectionStatus] = useState<'operational' | 'reconnecting'>('operational');
+
+  // Subtle background simulation of network drops
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const simulateConnectionCycle = () => {
+      // Stay operational for 15s - 45s randomly
+      const operationalTime = Math.random() * 30000 + 15000;
+      
+      timeoutId = setTimeout(() => {
+        setConnectionStatus('reconnecting');
+        
+        // Reconnect after 2s - 5s
+        const reconnectTime = Math.random() * 3000 + 2000;
+        timeoutId = setTimeout(() => {
+          setConnectionStatus('operational');
+          simulateConnectionCycle();
+        }, reconnectTime);
+      }, operationalTime);
+    };
+
+    simulateConnectionCycle();
+
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   // Reset header state and scroll position on navigation
   useEffect(() => {
@@ -268,9 +295,34 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
           <div className="flex items-center gap-6 min-w-max">
              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">anomaly alerting system</span>
              <div className="h-4 w-px bg-border/50" />
-             <div className="flex items-center gap-2">
-               <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-               <span className="text-[10px] font-black text-foreground uppercase tracking-widest opacity-60">Operational</span>
+             <div className="flex items-center gap-2 min-w-[120px]">
+               <AnimatePresence mode="wait">
+                 {connectionStatus === 'operational' ? (
+                   <motion.div 
+                     key="op"
+                     initial={{ opacity: 0, x: -5 }}
+                     animate={{ opacity: 1, x: 0 }}
+                     exit={{ opacity: 0, x: 5 }}
+                     transition={{ duration: 0.2 }}
+                     className="flex items-center gap-2"
+                   >
+                     <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                     <span className="text-[10px] font-black text-foreground uppercase tracking-widest opacity-60">Operational</span>
+                   </motion.div>
+                 ) : (
+                   <motion.div 
+                     key="recon"
+                     initial={{ opacity: 0, x: -5 }}
+                     animate={{ opacity: 1, x: 0 }}
+                     exit={{ opacity: 0, x: 5 }}
+                     transition={{ duration: 0.2 }}
+                     className="flex items-center gap-1.5"
+                   >
+                     <RefreshCw size={10} className="text-amber-500 animate-spin" />
+                     <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Reconnecting</span>
+                   </motion.div>
+                 )}
+               </AnimatePresence>
              </div>
           </div>
           
