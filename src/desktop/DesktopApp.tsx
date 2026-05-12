@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { DesktopSidebar } from './components/DesktopSidebar';
 import { DesktopAlertsFeed } from './components/DesktopAlertsFeed';
 import { DesktopSystemsView } from './components/DesktopSystemsView';
 import { DesktopSettings } from './components/DesktopSettings';
-import { getAllActiveAlerts } from '../app/data/mockData';
+import { getAllActiveAlerts, mockMeasurements } from '../app/data/mockData';
 import {
   severityConfigs as initialSeverityConfigs,
   anomalyConfigs as initialAnomalyConfigs,
@@ -55,7 +55,6 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
     localStorage.setItem('desktop_showExactTime', showExactTime.toString());
   }, [showExactTime]);
   const [acknowledgedIds, setAcknowledgedIds] = useState<Set<string>>(new Set(['m1', 'm2', 'm5', 'm23']));
-  const activeAlertsCount = getAllActiveAlerts().length - acknowledgedIds.size;
   const [severityConfigs, setSeverityConfigs] = useState<SeverityConfig[]>(() => {
     const saved = localStorage.getItem('desktop_severityConfigs');
     return saved ? JSON.parse(saved) : initialSeverityConfigs;
@@ -68,6 +67,24 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
     const saved = localStorage.getItem('desktop_displaySettings');
     return saved ? JSON.parse(saved) : initialDisplaySettings;
   });
+
+  const activeAlertsCount = useMemo(() => {
+    return mockMeasurements.filter(m => {
+      const isSessionAcked = acknowledgedIds.has(m.id);
+      const isDataAcked = m.alerts.length > 0 && m.alerts.every(a => a.currentState === 'ACKNOWLEDGED');
+      const isAcked = isSessionAcked || isDataAcked;
+
+      if (isAcked || m.alerts.length === 0) return false;
+      if (!m.alerts.every(a => a.currentState === 'NEW')) return false;
+
+      const hasActiveType = m.alerts.some(a => {
+        const config = anomalyConfigs.find(c => c.type === a.anomalyType);
+        return config?.isActive !== false;
+      });
+      
+      return hasActiveType;
+    }).length;
+  }, [acknowledgedIds, anomalyConfigs]);
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [toast, setToast] = useState<{ visible: boolean; message: string }>({ visible: false, message: '' });
   const toastTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -353,9 +370,15 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
                 navigate('/desktop/alerts');
                 setAlertsView('active');
               }}
-              className="flex items-center gap-3 bg-primary text-black px-6 py-2.5 rounded-2xl shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all border border-primary/20 group cursor-pointer"
+              className={`flex items-center gap-3 px-6 py-2.5 rounded-2xl transition-all border group cursor-pointer ${
+                activeAlertsCount > 0 
+                  ? "bg-primary text-black shadow-lg shadow-primary/20 hover:shadow-primary/40 border-primary/20" 
+                  : "bg-[#dedede] text-black/40 border-transparent shadow-none"
+              }`}
             >
-              <div className="w-2 h-2 bg-black rounded-full animate-pulse" />
+              {activeAlertsCount > 0 && (
+                <div className="w-2 h-2 bg-black rounded-full animate-pulse" />
+              )}
               <span className="text-[10px] font-black uppercase tracking-widest">{activeAlertsCount} Live Alerts</span>
             </motion.button>
           </div>

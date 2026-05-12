@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { ChevronLeft, Bell, Activity, Settings } from 'lucide-react';
 import { getAccessibleColor } from './utils/colorUtils';
 import { ActiveAlertsFeed } from './components/ActiveAlertsFeed';
 import { SystemsView } from './components/SystemsView';
 import { SettingsMain } from './components/settings/SettingsMain';
-import { getAllActiveAlerts } from './data/mockData';
+import { getAllActiveAlerts, mockMeasurements } from './data/mockData';
 import { motion, AnimatePresence } from 'motion/react';
 import logo from '../assets/logo.svg';
 
@@ -99,7 +99,23 @@ export default function App({ onLogout }: AppProps) {
     setIsSettingsSubView(false);
   }, [activeTab]);
 
-  const activeAlertsCount = getAllActiveAlerts().length;
+  const activeAlertsCount = useMemo(() => {
+    return mockMeasurements.filter(m => {
+      const isSessionAcked = sessionAcked.has(m.id);
+      const isDataAcked = m.alerts.length > 0 && m.alerts.every(a => a.currentState === 'ACKNOWLEDGED');
+      const isAcked = isSessionAcked || isDataAcked;
+
+      if (isAcked || m.alerts.length === 0) return false;
+      if (!m.alerts.every(a => a.currentState === 'NEW')) return false;
+
+      const hasActiveType = m.alerts.some(a => {
+        const config = anomalyConfigs.find(c => c.type === a.anomalyType);
+        return config?.isActive !== false;
+      });
+      
+      return hasActiveType;
+    }).length;
+  }, [sessionAcked, anomalyConfigs]);
 
   const handleScroll = (e: React.UIEvent<HTMLElement>) => {
     const currentScrollY = e.currentTarget.scrollTop;
@@ -201,19 +217,23 @@ export default function App({ onLogout }: AppProps) {
                     )}
                   </AnimatePresence>
                 </div>
-                {activeAlertsCount > 0 && (
-                  <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    onClick={() => setActiveTab('alerts')}
-                    className="px-3 py-1.5 bg-primary text-primary-foreground rounded-full font-bold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity"
-                    aria-label={`View ${activeAlertsCount} active alerts`}
-                  >
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  onClick={() => setActiveTab('alerts')}
+                  className={`px-3 py-1.5 rounded-full font-bold text-sm flex items-center gap-2 transition-all duration-300 ${
+                    activeAlertsCount > 0 
+                      ? "bg-primary text-primary-foreground hover:opacity-90" 
+                      : "bg-[#dedede] text-foreground/50 border border-transparent"
+                  }`}
+                  aria-label={activeAlertsCount > 0 ? `View ${activeAlertsCount} active alerts` : "No active alerts"}
+                >
+                  {activeAlertsCount > 0 && (
                     <div className="w-2 h-2 bg-primary-foreground rounded-full animate-pulse" />
-                    {activeAlertsCount} Active
-                  </motion.button>
-                )}
+                  )}
+                  {activeAlertsCount} Active
+                </motion.button>
               </div>
             </div>
           </div>
