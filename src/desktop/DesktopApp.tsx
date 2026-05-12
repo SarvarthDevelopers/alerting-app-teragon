@@ -93,6 +93,9 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
 
   const handleResetAppState = () => {
     setAcknowledgedIds(new Set());
+    setSeverityConfigs(initialSeverityConfigs);
+    setAnomalyConfigs(initialAnomalyConfigs);
+    setDisplaySettings(initialDisplaySettings);
     triggerToast('App state restored to factory defaults');
   };
 

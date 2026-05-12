@@ -55,6 +55,9 @@ export default function App({ onLogout }: AppProps) {
 
   const handleResetAppState = () => {
     setSessionAcked(new Map());
+    setAnomalyConfigs(initialAnomalyConfigs);
+    setSeverityConfigs(initialSeverityConfigs);
+    setDisplaySettings(initialDisplaySettings);
   };
 
   useEffect(() => {
