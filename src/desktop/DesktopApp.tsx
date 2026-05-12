@@ -296,7 +296,7 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
           className="flex-1 overflow-y-scroll custom-scrollbar"
         >
           <div className="h-20 shrink-0" />
-          <div className="p-10">
+          <div className="px-10 pb-10 pt-6">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
