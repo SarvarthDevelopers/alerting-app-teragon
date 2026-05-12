@@ -13,7 +13,7 @@ import {
 import { AnomalyConfig, SeverityConfig, DisplaySettings, User } from '../app/types';
 import { users as initialUsers } from '../app/data/settingsData';
 import { motion, AnimatePresence } from 'motion/react';
-import { Bell, Activity, Settings, Search, User as UserIcon, RefreshCw } from 'lucide-react';
+import { Bell, Activity, Settings, Search, User as UserIcon, RefreshCw, WifiOff } from 'lucide-react';
 import { getAccessibleColor } from '../app/utils/colorUtils';
 import { SavedToast } from '../app/components/ui/SavedToast';
 
@@ -72,25 +72,31 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
   const [toast, setToast] = useState<{ visible: boolean; message: string }>({ visible: false, message: '' });
   const toastTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const [connectionStatus, setConnectionStatus] = useState<'operational' | 'reconnecting'>('operational');
+  const [connectionStatus, setConnectionStatus] = useState<'operational' | 'reconnecting' | 'disconnected'>('operational');
 
   // Subtle background simulation of network drops
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
 
     const simulateConnectionCycle = () => {
-      // Stay operational for 15s - 45s randomly
-      const operationalTime = Math.random() * 30000 + 15000;
+      // Stay operational for 5s - 15s randomly
+      const operationalTime = Math.random() * 10000 + 5000;
       
       timeoutId = setTimeout(() => {
-        setConnectionStatus('reconnecting');
+        setConnectionStatus('disconnected');
         
-        // Reconnect after 2s - 5s
-        const reconnectTime = Math.random() * 3000 + 2000;
+        // Stay disconnected for 1s - 3s
+        const disconnectedTime = Math.random() * 2000 + 1000;
         timeoutId = setTimeout(() => {
-          setConnectionStatus('operational');
-          simulateConnectionCycle();
-        }, reconnectTime);
+          setConnectionStatus('reconnecting');
+          
+          // Reconnect after 1s - 3s
+          const reconnectTime = Math.random() * 2000 + 1000;
+          timeoutId = setTimeout(() => {
+            setConnectionStatus('operational');
+            simulateConnectionCycle();
+          }, reconnectTime);
+        }, disconnectedTime);
       }, operationalTime);
     };
 
@@ -297,7 +303,7 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
              <div className="h-4 w-px bg-border/50" />
              <div className="flex items-center gap-2 min-w-[120px]">
                <AnimatePresence mode="wait">
-                 {connectionStatus === 'operational' ? (
+                 {connectionStatus === 'operational' && (
                    <motion.div 
                      key="op"
                      initial={{ opacity: 0, x: -5 }}
@@ -309,7 +315,21 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
                      <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                      <span className="text-[10px] font-black text-foreground uppercase tracking-widest opacity-60">Operational</span>
                    </motion.div>
-                 ) : (
+                 )}
+                 {connectionStatus === 'disconnected' && (
+                   <motion.div 
+                     key="disc"
+                     initial={{ opacity: 0, x: -5 }}
+                     animate={{ opacity: 1, x: 0 }}
+                     exit={{ opacity: 0, x: 5 }}
+                     transition={{ duration: 0.2 }}
+                     className="flex items-center gap-1.5"
+                   >
+                     <WifiOff size={10} className="text-destructive" />
+                     <span className="text-[10px] font-black text-destructive uppercase tracking-widest">Disconnected</span>
+                   </motion.div>
+                 )}
+                 {connectionStatus === 'reconnecting' && (
                    <motion.div 
                      key="recon"
                      initial={{ opacity: 0, x: -5 }}
