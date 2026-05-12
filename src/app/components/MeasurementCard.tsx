@@ -366,8 +366,8 @@ export const MeasurementCard = memo(({
                                   <span className={`font-bold text-foreground ${hasDetails ? 'border-b-[1.5px] border-dotted border-foreground/80' : ''}`}>
                                     {config?.displayName || alert.anomalyType}:
                                   </span>
-                                  <span className="text-muted-foreground ml-1 font-mono">
-                                    {alert.startPos.toFixed(2)} - {endPos.toFixed(2)} mm
+                                  <span className={`text-muted-foreground ml-1 font-sans`}>
+                                    {formatLength(alert.startPos)} - {formatLength(endPos)}
                                   </span>
                                 </div>
                               </div>
@@ -380,7 +380,7 @@ export const MeasurementCard = memo(({
                                     className="overflow-hidden"
                                   >
                                     <div className="ml-3.5 mt-1 pb-1">
-                                      <p className="text-sm font-normal leading-relaxed text-foreground/70 italic">
+                                      <p className="text-sm font-normal leading-relaxed text-foreground/70 italic font-sans">
                                         {alert.technicalDetails}
                                       </p>
                                     </div>

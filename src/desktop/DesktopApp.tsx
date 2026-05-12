@@ -96,6 +96,7 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
     setSeverityConfigs(initialSeverityConfigs);
     setAnomalyConfigs(initialAnomalyConfigs);
     setDisplaySettings(initialDisplaySettings);
+    setShowLargeUnit(true);
     triggerToast('App state restored to factory defaults');
   };
 

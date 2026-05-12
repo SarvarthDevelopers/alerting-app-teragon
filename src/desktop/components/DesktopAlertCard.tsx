@@ -269,7 +269,7 @@ export const DesktopAlertCard = memo(({
           <div className="text-[10px] text-muted-foreground font-bold mt-2 flex items-center gap-2 bg-black/5 self-start px-2 py-1 rounded-lg">
             <span>{measurement.productType}</span>
             <span className="opacity-30">•</span>
-            <span className="opacity-80 font-mono">{measurement.productLength}mm</span>
+            <span className="opacity-80 font-sans">{formatLength(measurement.productLength)}</span>
           </div>
         </div>
 
@@ -432,7 +432,7 @@ export const DesktopAlertCard = memo(({
                               {config?.displayName || alert.anomalyType}
                             </span>
                             <span className={`text-[10px] font-bold tabular-nums ${isSelectedForDetail ? 'text-white/60' : 'text-muted-foreground'}`}>
-                              {alert.startPos.toFixed(2)} - {endPos.toFixed(2)}mm
+                              {formatLength(alert.startPos)} - {formatLength(endPos)}
                             </span>
                             {hasDetails && (
                               <div className={`ml-1 w-4.5 h-4.5 rounded-full flex items-center justify-center transition-colors ${isSelectedForDetail ? 'bg-white/20' : 'bg-black/5'}`}>
@@ -606,9 +606,9 @@ export const DesktopAlertCard = memo(({
                         <span className={`text-[10px] font-black tracking-tight ${isSelected ? 'text-white' : 'text-foreground/80'}`}>
                           {config?.displayName || alert.anomalyType}
                         </span>
-                        <span className={`text-[10px] font-bold tabular-nums ${isSelected ? 'text-white/50' : 'text-muted-foreground'}`}>
-                          {alert.startPos.toFixed(2)} - {Math.min(alert.startPos + alert.length, measurement.productLength).toFixed(2)}mm
-                        </span>
+                          <span className={`text-[10px] font-bold tabular-nums ${isSelected ? 'text-white/60' : 'text-black/40'}`}>
+                            {formatLength(alert.startPos)} - {formatLength(Math.min(alert.startPos + alert.length, measurement.productLength))}
+                          </span>
                         {!!alert.technicalDetails && (
                           <div className={`ml-1 w-4.5 h-4.5 rounded-full flex items-center justify-center transition-colors ${isSelected ? 'bg-white/10' : 'bg-black/5'}`}>
                             <Info size={11} className={isSelected ? 'text-white' : 'text-muted-foreground'} />
@@ -646,8 +646,8 @@ export const DesktopAlertCard = memo(({
                         <span className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-1.5">
                           {anomalyConfigs.find(c => c.type === selectedAlert.anomalyType)?.displayName || selectedAlert.anomalyType}
                         </span>
-                        <span className="text-[11px] font-bold text-muted-foreground font-mono">
-                          {selectedAlert.startPos.toFixed(2)} - {(selectedAlert.startPos + selectedAlert.length).toFixed(2)}mm
+                        <span className="text-[11px] font-bold text-muted-foreground font-sans">
+                          {formatLength(selectedAlert.startPos)} - {formatLength(selectedAlert.startPos + selectedAlert.length)}
                         </span>
                       </div>
 

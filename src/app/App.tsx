@@ -58,6 +58,7 @@ export default function App({ onLogout }: AppProps) {
     setAnomalyConfigs(initialAnomalyConfigs);
     setSeverityConfigs(initialSeverityConfigs);
     setDisplaySettings(initialDisplaySettings);
+    setShowLargeUnit(true);
   };
 
   useEffect(() => {
