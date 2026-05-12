@@ -248,12 +248,12 @@ export function ActiveAlertsFeed({
               )}
             </AnimatePresence>
 
-            <AnimatePresence initial={false}>
+            <AnimatePresence initial={false} mode="popLayout">
               {filteredMeasurements.map((measurement) => (
                 <motion.div
-                  layout
+                  layout="position"
                   key={measurement.id}
-                  exit={{ opacity: 0, x: 40, transition: { duration: 0.25, ease: [0.4, 0, 1, 1] } }}
+                  exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.25, ease: [0.4, 0, 1, 1] } }}
                 >
                   <MeasurementCard
                     measurement={measurement}

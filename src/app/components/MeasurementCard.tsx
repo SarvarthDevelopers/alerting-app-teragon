@@ -453,6 +453,7 @@ export const MeasurementCard = memo(({
                   </div>
 
                   <button
+                    disabled={isAcknowledging}
                     onClick={(e) => {
                       e.stopPropagation();
                       if (!showConfirmation) {
@@ -463,7 +464,7 @@ export const MeasurementCard = memo(({
                     }}
                     className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 ${
                       isAcknowledging
-                        ? 'bg-green-500 text-white'
+                        ? 'bg-green-500 text-white cursor-default'
                         : 'bg-[#dedede] text-foreground hover:opacity-90'
                     }`}
                   >
