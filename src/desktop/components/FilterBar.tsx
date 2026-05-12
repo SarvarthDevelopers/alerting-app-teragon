@@ -105,9 +105,22 @@ export function FilterBar({ onFilterChange, hideSystemFilter, anomalyConfigs, se
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-card border-border rounded-xl">
-            {severityOptions.map(opt => (
-              <SelectItem key={opt} value={opt} className="font-bold">{opt}</SelectItem>
-            ))}
+            {severityOptions.map(opt => {
+              const severityId = opt === 'All Severities' ? null : opt.toUpperCase();
+              return (
+                <SelectItem key={opt} value={opt} className="font-bold">
+                  <div className="flex items-center gap-2">
+                    {severityId && (
+                      <div 
+                        className="w-2.5 h-2.5 rounded-full"
+                        style={{ backgroundColor: `var(--severity-${severityId.toLowerCase()})` }}
+                      />
+                    )}
+                    {opt}
+                  </div>
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
 
