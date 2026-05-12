@@ -13,8 +13,8 @@ export const anomalyConfigs: AnomalyConfig[] = [
     type: 'VISUAL_DEFECT',
     sourceTypeKey: 'VISUAL_DEFECT',
     displayName: 'Visual Defect',
-    defaultSeverity: 'HIGH',
-    color: '#f97316',
+    defaultSeverity: 'CRITICAL',
+    color: '#dc2626',
     audioAlarm: true,
     flashlightAlarm: true,
     isActive: true
