@@ -51,9 +51,18 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
   }, [showExactTime]);
   const [acknowledgedIds, setAcknowledgedIds] = useState<Set<string>>(new Set(['m1', 'm2', 'm5', 'm23']));
   const activeAlertsCount = getAllActiveAlerts().length - acknowledgedIds.size;
-  const [severityConfigs, setSeverityConfigs] = useState<SeverityConfig[]>(initialSeverityConfigs);
-  const [anomalyConfigs, setAnomalyConfigs] = useState<AnomalyConfig[]>(initialAnomalyConfigs);
-  const [displaySettings, setDisplaySettings] = useState<DisplaySettings>(initialDisplaySettings);
+  const [severityConfigs, setSeverityConfigs] = useState<SeverityConfig[]>(() => {
+    const saved = localStorage.getItem('desktop_severityConfigs');
+    return saved ? JSON.parse(saved) : initialSeverityConfigs;
+  });
+  const [anomalyConfigs, setAnomalyConfigs] = useState<AnomalyConfig[]>(() => {
+    const saved = localStorage.getItem('desktop_anomalyConfigs');
+    return saved ? JSON.parse(saved) : initialAnomalyConfigs;
+  });
+  const [displaySettings, setDisplaySettings] = useState<DisplaySettings>(() => {
+    const saved = localStorage.getItem('desktop_displaySettings');
+    return saved ? JSON.parse(saved) : initialDisplaySettings;
+  });
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [toast, setToast] = useState<{ visible: boolean; message: string }>({ visible: false, message: '' });
   const toastTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -136,10 +145,21 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
       document.documentElement.style.setProperty(`--severity-${config.id.toLowerCase()}`, finalColor);
     });
 
-    // Sync OK status color
     const okColor = getAccessibleColor('#10b981', displaySettings.colorBlindMode);
     document.documentElement.style.setProperty('--severity-ok', okColor);
   }, [severityConfigs, displaySettings.colorBlindMode]);
+
+  useEffect(() => {
+    localStorage.setItem('desktop_anomalyConfigs', JSON.stringify(anomalyConfigs));
+  }, [anomalyConfigs]);
+
+  useEffect(() => {
+    localStorage.setItem('desktop_severityConfigs', JSON.stringify(severityConfigs));
+  }, [severityConfigs]);
+
+  useEffect(() => {
+    localStorage.setItem('desktop_displaySettings', JSON.stringify(displaySettings));
+  }, [displaySettings]);
 
   const renderContent = () => {
     switch (activeTab) {

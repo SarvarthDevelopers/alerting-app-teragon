@@ -30,9 +30,18 @@ export default function App({ onLogout }: AppProps) {
   const mainRef = useRef<HTMLDivElement>(null);
 
   // Global Settings State
-  const [anomalyConfigs, setAnomalyConfigs] = useState<AnomalyConfig[]>(initialAnomalyConfigs);
-  const [severityConfigs, setSeverityConfigs] = useState<SeverityConfig[]>(initialSeverityConfigs);
-  const [displaySettings, setDisplaySettings] = useState<DisplaySettingsType>(initialDisplaySettings);
+  const [anomalyConfigs, setAnomalyConfigs] = useState<AnomalyConfig[]>(() => {
+    const saved = localStorage.getItem('anomalyConfigs');
+    return saved ? JSON.parse(saved) : initialAnomalyConfigs;
+  });
+  const [severityConfigs, setSeverityConfigs] = useState<SeverityConfig[]>(() => {
+    const saved = localStorage.getItem('severityConfigs');
+    return saved ? JSON.parse(saved) : initialSeverityConfigs;
+  });
+  const [displaySettings, setDisplaySettings] = useState<DisplaySettingsType>(() => {
+    const saved = localStorage.getItem('displaySettings');
+    return saved ? JSON.parse(saved) : initialDisplaySettings;
+  });
   const [showLargeUnit, setShowLargeUnit] = useState(() => localStorage.getItem('mobile_showLargeUnit') !== 'false');
   const [sessionAcked, setSessionAcked] = useState<Map<string, { acknowledgedBy: string; acknowledgedAt: string }>>(new Map());
 
@@ -51,6 +60,18 @@ export default function App({ onLogout }: AppProps) {
   useEffect(() => {
     localStorage.setItem('mobile_showLargeUnit', showLargeUnit.toString());
   }, [showLargeUnit]);
+
+  useEffect(() => {
+    localStorage.setItem('anomalyConfigs', JSON.stringify(anomalyConfigs));
+  }, [anomalyConfigs]);
+
+  useEffect(() => {
+    localStorage.setItem('severityConfigs', JSON.stringify(severityConfigs));
+  }, [severityConfigs]);
+
+  useEffect(() => {
+    localStorage.setItem('displaySettings', JSON.stringify(displaySettings));
+  }, [displaySettings]);
 
   // Sync CSS variables with severity colors
   useEffect(() => {
