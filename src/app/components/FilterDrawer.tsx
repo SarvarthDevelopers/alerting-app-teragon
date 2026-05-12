@@ -93,9 +93,9 @@ export function FilterDrawer({ isOpen, onClose, filters, onApplyFilters, showTim
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'tween', duration: 0.36, ease: [0.32, 0.72, 0, 1] }}
-            className="fixed bottom-0 left-0 right-0 mx-auto max-w-[480px] bg-card rounded-t-3xl shadow-2xl z-50 max-h-[85vh] overflow-hidden"
+            className="fixed bottom-0 left-0 right-0 mx-auto max-w-[480px] bg-card rounded-t-3xl shadow-2xl z-50 flex flex-col max-h-[85dvh] overflow-hidden"
           >
-            <div className="p-4 border-b border-border flex items-center justify-between">
+            <div className="p-4 border-b border-border flex items-center justify-between shrink-0">
               <h2 className="text-xl font-bold text-foreground">Filters</h2>
               <button
                 onClick={onClose}
@@ -105,7 +105,7 @@ export function FilterDrawer({ isOpen, onClose, filters, onApplyFilters, showTim
               </button>
             </div>
 
-            <div className="overflow-y-auto max-h-[calc(85vh-140px)] p-4 space-y-6">
+            <div className="flex-1 overflow-y-auto p-4 space-y-6">
               {/* Anomaly Types */}
               <div>
                 <h3 className="font-semibold text-foreground mb-3">Anomaly Type</h3>
@@ -199,7 +199,7 @@ export function FilterDrawer({ isOpen, onClose, filters, onApplyFilters, showTim
             </div>
 
             {/* Action Buttons */}
-            <div className="p-4 border-t border-border flex gap-3">
+            <div className="p-4 border-t border-border flex gap-3 shrink-0">
               <button
                 onClick={handleClear}
                 className="flex-1 py-3 rounded-xl font-bold text-foreground bg-muted hover:bg-muted/70 transition-colors"

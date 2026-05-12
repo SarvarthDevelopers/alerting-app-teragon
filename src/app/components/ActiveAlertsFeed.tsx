@@ -19,6 +19,8 @@ interface ActiveAlertsFeedProps {
   setShowLargeUnit: (val: boolean) => void;
   sessionAcked: Map<string, { acknowledgedBy: string; acknowledgedAt: string }>;
   onAcknowledge: (id: string) => void;
+  activeFilter: 'active' | 'acknowledged';
+  setActiveFilter: (filter: 'active' | 'acknowledged') => void;
 }
 
 export function ActiveAlertsFeed({ 
@@ -28,9 +30,10 @@ export function ActiveAlertsFeed({
   showLargeUnit, 
   setShowLargeUnit,
   sessionAcked,
-  onAcknowledge
+  onAcknowledge,
+  activeFilter,
+  setActiveFilter
 }: ActiveAlertsFeedProps) {
-  const [activeFilter, setActiveFilter] = useState<AlertFilter>('active');
   const [alertCount, setAlertCount] = useState(0);
   const [hasNewAlert, setHasNewAlert] = useState(false);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);

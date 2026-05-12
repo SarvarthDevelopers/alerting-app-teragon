@@ -32,7 +32,12 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
     : pathname.startsWith('/desktop/settings') ? 'settings'
     : 'alerts';
 
-  const navigateToTab = (tab: Tab) => navigate(`/desktop/${tab}`);
+  const navigateToTab = (tab: Tab) => {
+    navigate(`/desktop/${tab}`);
+    if (tab === 'alerts') {
+      setAlertsView('active');
+    }
+  };
 
 
   const [alertsView, setAlertsView] = useState<'active' | 'acknowledged'>('active');

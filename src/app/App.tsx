@@ -27,6 +27,7 @@ export default function App({ onLogout }: AppProps) {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isSettingsSubView, setIsSettingsSubView] = useState(false);
   const [backTrigger, setBackTrigger] = useState(0);
+  const [activeAlertsFilter, setActiveAlertsFilter] = useState<'active' | 'acknowledged'>('active');
   const mainRef = useRef<HTMLDivElement>(null);
 
   // Global Settings State
@@ -249,6 +250,8 @@ export default function App({ onLogout }: AppProps) {
                   setShowLargeUnit={setShowLargeUnit}
                   sessionAcked={sessionAcked}
                   onAcknowledge={handleAcknowledge}
+                  activeFilter={activeAlertsFilter}
+                  setActiveFilter={setActiveAlertsFilter}
                 />
               )}
               {activeTab === 'systems' && (
@@ -274,7 +277,10 @@ export default function App({ onLogout }: AppProps) {
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      if (tab.id === 'alerts') setActiveAlertsFilter('active');
+                    }}
                     className={`flex-1 flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all relative ${
                       isActive
                         ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/20'
