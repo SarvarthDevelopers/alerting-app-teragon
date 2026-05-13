@@ -39,7 +39,7 @@ export function DesktopSeveritiesSettings({ configs, onUpdate }: DesktopSeveriti
       </div>
 
       {/* Severity Cards - Matching Mobile Style */}
-      <div className="p-6 space-y-4 max-w-2xl">
+      <div className="p-6 space-y-4">
         {configs.map((severity) => (
           <div
             key={severity.id}
