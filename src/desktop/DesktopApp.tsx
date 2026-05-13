@@ -41,8 +41,8 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
 
 
   const [alertsView, setAlertsView] = useState<'active' | 'acknowledged'>('active');
-  const [showLargeUnit, setShowLargeUnit] = useState(() => localStorage.getItem('desktop_showLargeUnit') !== 'false');
-  const [showExactTime, setShowExactTime] = useState(() => localStorage.getItem('desktop_showExactTime') === 'true');
+  const [showLargeUnit, setShowLargeUnit] = useState(true);
+  const [showExactTime, setShowExactTime] = useState(false);
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -54,19 +54,10 @@ export default function DesktopApp({ onLogout }: DesktopAppProps) {
   useEffect(() => {
     localStorage.setItem('desktop_showExactTime', showExactTime.toString());
   }, [showExactTime]);
-  const [acknowledgedIds, setAcknowledgedIds] = useState<Set<string>>(new Set(['m1', 'm2', 'm5', 'm23']));
-  const [severityConfigs, setSeverityConfigs] = useState<SeverityConfig[]>(() => {
-    const saved = localStorage.getItem('desktop_severityConfigs');
-    return saved ? JSON.parse(saved) : initialSeverityConfigs;
-  });
-  const [anomalyConfigs, setAnomalyConfigs] = useState<AnomalyConfig[]>(() => {
-    const saved = localStorage.getItem('desktop_anomalyConfigs');
-    return saved ? JSON.parse(saved) : initialAnomalyConfigs;
-  });
-  const [displaySettings, setDisplaySettings] = useState<DisplaySettings>(() => {
-    const saved = localStorage.getItem('desktop_displaySettings');
-    return saved ? JSON.parse(saved) : initialDisplaySettings;
-  });
+  const [acknowledgedIds, setAcknowledgedIds] = useState<Set<string>>(new Set());
+  const [severityConfigs, setSeverityConfigs] = useState<SeverityConfig[]>(initialSeverityConfigs);
+  const [anomalyConfigs, setAnomalyConfigs] = useState<AnomalyConfig[]>(initialAnomalyConfigs);
+  const [displaySettings, setDisplaySettings] = useState<DisplaySettings>(initialDisplaySettings);
 
   const activeAlertsCount = useMemo(() => {
     return mockMeasurements.filter(m => {

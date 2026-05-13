@@ -30,6 +30,16 @@ import {
   SelectValue,
 } from '../../../app/components/ui/select';
 import { Label } from '../../../app/components/ui/label';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../../app/components/ui/alert-dialog";
 
 interface DesktopUserManagementProps {
   users: User[];
@@ -48,6 +58,7 @@ export function DesktopUserManagement({ users, setUsers }: DesktopUserManagement
     password: ''
   });
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   const saveUser = () => {
     if (newUser.fullName && newUser.username) {
@@ -108,6 +119,7 @@ export function DesktopUserManagement({ users, setUsers }: DesktopUserManagement
 
   const deleteUser = (id: string) => {
     setUsers(users.filter(u => u.id !== id));
+    setUserToDelete(null);
   };
 
   const getRoleVariant = (role: UserRole) => {
@@ -233,7 +245,7 @@ export function DesktopUserManagement({ users, setUsers }: DesktopUserManagement
                         <Button 
                           variant="ghost" 
                           size="icon"
-                          onClick={() => deleteUser(user.id)}
+                          onClick={() => setUserToDelete(user)}
                           className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"
                         >
                           <Trash2 size={14} />
@@ -343,6 +355,36 @@ export function DesktopUserManagement({ users, setUsers }: DesktopUserManagement
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ── Delete Confirmation Dialog ── */}
+      <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+        <AlertDialogContent className="sm:max-w-[420px] rounded-[32px] border-border bg-card p-8">
+          <AlertDialogHeader className="mb-6">
+            <div className="w-16 h-16 rounded-[24px] bg-destructive/10 flex items-center justify-center mb-4 mx-auto sm:mx-0 border border-destructive/20">
+              <Trash2 size={32} className="text-destructive" />
+            </div>
+            <AlertDialogTitle className="text-2xl font-black tracking-tight">Confirm Deletion</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-muted-foreground font-bold mt-2 leading-relaxed">
+              Are you sure you want to delete <span className="text-foreground underline decoration-destructive decoration-2 underline-offset-4">{userToDelete?.fullName}</span>? This action cannot be undone and will immediately revoke all system access for this account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <AlertDialogFooter className="mt-8 gap-3">
+            <AlertDialogCancel
+              autoFocus
+              className="flex-1 h-12 rounded-xl font-black uppercase tracking-widest text-[10px] border-border/50 hover:bg-muted/50 transition-all focus:border-black focus:ring-black/50 focus:ring-[3px] outline-none"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => userToDelete && deleteUser(userToDelete.id)}
+              className="flex-1 h-12 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-destructive/20 hover:shadow-destructive/30 hover:-translate-y-0.5 transition-all"
+            >
+              Confirm Deletion
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

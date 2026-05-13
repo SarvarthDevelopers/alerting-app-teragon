@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { Palette, Zap, Monitor, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { SeveritiesSettings } from '../../app/components/settings/SeveritiesSettings';
+import { DesktopSeveritiesSettings } from './settings/DesktopSeveritiesSettings';
 import { AnomalyTypesSettings } from '../../app/components/settings/AnomalyTypesSettings';
 import { DesktopDisplaySettings } from './settings/DesktopDisplaySettings';
 import { DesktopUserManagement } from './settings/DesktopUserManagement';
@@ -110,7 +110,7 @@ export function DesktopSettings({
             transition={{ duration: 0.15 }}
           >
             {activeSection === 'severities' && (
-              <SeveritiesSettings
+              <DesktopSeveritiesSettings
                 onBack={() => {}}
                 configs={severityConfigs}
                 onUpdate={(configs) => { setSeverityConfigs(configs); triggerToast(); }}

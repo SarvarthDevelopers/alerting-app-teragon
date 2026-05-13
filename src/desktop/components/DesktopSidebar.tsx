@@ -1,6 +1,18 @@
 import { Bell, Activity, Settings, LayoutDashboard, LogOut, User } from 'lucide-react';
 import { motion } from 'motion/react';
 import logo from '../../assets/logo.svg';
+import { useState } from 'react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../app/components/ui/alert-dialog";
+import { Button } from "../../app/components/ui/button";
 
 type Tab = 'alerts' | 'systems' | 'settings';
 
@@ -12,6 +24,7 @@ interface DesktopSidebarProps {
 }
 
 export function DesktopSidebar({ activeTab, setActiveTab, activeAlertsCount, onLogout }: DesktopSidebarProps) {
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
   const menuItems = [
     { id: 'alerts' as Tab, label: 'Alerts', icon: Bell, badge: activeAlertsCount },
     { id: 'systems' as Tab, label: 'Systems', icon: Activity },
@@ -79,7 +92,7 @@ export function DesktopSidebar({ activeTab, setActiveTab, activeAlertsCount, onL
             </div>
           </div>
           <button 
-            onClick={onLogout}
+            onClick={() => setIsLogoutDialogOpen(true)}
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-colors text-[10px] font-black uppercase tracking-widest"
           >
             <LogOut size={14} />
@@ -87,6 +100,36 @@ export function DesktopSidebar({ activeTab, setActiveTab, activeAlertsCount, onL
           </button>
         </div>
       </div>
+
+      {/* Logout Confirmation Dialog */}
+      <AlertDialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
+        <AlertDialogContent className="sm:max-w-[420px] rounded-[32px] border-border bg-card p-8">
+          <AlertDialogHeader className="mb-6">
+            <div className="w-16 h-16 rounded-[24px] bg-red-50 flex items-center justify-center mb-4 mx-auto sm:mx-0 border border-red-100">
+              <LogOut size={32} className="text-red-500" />
+            </div>
+            <AlertDialogTitle className="text-2xl font-black tracking-tight">Confirm Logout</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-muted-foreground font-bold mt-2 leading-relaxed">
+              Are you sure you want to end your current session? You will need to sign in again to access the production monitoring dashboard.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <AlertDialogFooter className="mt-8 gap-3">
+            <AlertDialogCancel
+              autoFocus
+              className="flex-1 h-12 rounded-xl font-black uppercase tracking-widest text-[10px] border-border/50 hover:bg-muted/50 transition-all focus:border-black focus:ring-black/50 focus:ring-[3px] outline-none"
+            >
+              Stay Logged In
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={onLogout}
+              className="flex-1 h-12 bg-red-500 hover:bg-red-600 text-white rounded-xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-red-500/20 hover:shadow-red-500/30 hover:-translate-y-0.5 transition-all border-none"
+            >
+              Log Me Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </aside>
   );
 }

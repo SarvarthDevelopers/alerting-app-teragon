@@ -61,6 +61,7 @@ export function Login({ onLogin, isDesktop = false }: LoginProps) {
                 Email Address
               </label>
               <input
+                tabIndex={1}
                 type="email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setError(null); }}
@@ -91,9 +92,10 @@ export function Login({ onLogin, isDesktop = false }: LoginProps) {
                 <label className={`text-[12px] md:text-[13px] font-bold uppercase tracking-wider transition-colors ${error && error.includes('password') ? 'text-destructive' : 'text-foreground/40'}`}>
                   Password
                 </label>
-                <button type="button" className="text-[12px] md:text-[13px] font-bold text-foreground hover:opacity-60 underline transition-opacity underline-offset-2">Forgot?</button>
+                <button tabIndex={3} type="button" className="text-[12px] md:text-[13px] font-bold text-foreground hover:opacity-60 underline transition-opacity underline-offset-2">Forgot?</button>
               </div>
               <input
+                tabIndex={2}
                 type="password"
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); setError(null); }}
@@ -120,6 +122,7 @@ export function Login({ onLogin, isDesktop = false }: LoginProps) {
             </div>
 
             <motion.button
+              tabIndex={4}
               whileTap={{ scale: 0.98 }}
               disabled={isLoading}
               className="w-full bg-primary text-primary-foreground font-bold py-4 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-primary/5 mt-2"
