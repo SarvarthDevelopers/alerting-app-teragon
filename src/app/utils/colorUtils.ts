@@ -1,4 +1,5 @@
 export const OKABE_ITO_PALETTE = [
+  { name: 'Black', hex: '#000000' },
   { name: 'Orange', hex: '#E69F00' },
   { name: 'Sky Blue', hex: '#56B4E9' },
   { name: 'Bluish Green', hex: '#009E73' },
