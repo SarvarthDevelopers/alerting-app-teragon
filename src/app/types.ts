@@ -101,6 +101,7 @@ export interface User {
   role: UserRole;
   isActive: boolean;
   forcePasswordChange: boolean;
+  email?: string;
   password?: string;
   createdAt: string;
 }

@@ -52,6 +52,7 @@ export function DesktopUserManagement({ users, setUsers }: DesktopUserManagement
   const [newUser, setNewUser] = useState<Partial<User>>({
     username: '',
     fullName: '',
+    email: '',
     role: 'OPERATOR',
     isActive: true,
     forcePasswordChange: true,
@@ -75,6 +76,7 @@ export function DesktopUserManagement({ users, setUsers }: DesktopUserManagement
             id: `u${Date.now()}`,
             fullName: newUser.fullName!,
             username: newUser.username!,
+            email: newUser.email,
             role: newUser.role as UserRole,
             isActive: newUser.isActive!,
             forcePasswordChange: newUser.forcePasswordChange!,
@@ -92,6 +94,7 @@ export function DesktopUserManagement({ users, setUsers }: DesktopUserManagement
     setNewUser({
       fullName: '',
       username: '',
+      email: '',
       role: 'OPERATOR',
       isActive: true,
       forcePasswordChange: true,
@@ -104,6 +107,7 @@ export function DesktopUserManagement({ users, setUsers }: DesktopUserManagement
     setNewUser({
       fullName: user.fullName,
       username: user.username,
+      email: user.email || '',
       role: user.role,
       isActive: user.isActive,
       forcePasswordChange: user.forcePasswordChange,
@@ -132,7 +136,8 @@ export function DesktopUserManagement({ users, setUsers }: DesktopUserManagement
 
   const filteredUsers = users.filter(u => 
     u.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.username.toLowerCase().includes(searchQuery.toLowerCase())
+    u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (u.email && u.email.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -201,8 +206,15 @@ export function DesktopUserManagement({ users, setUsers }: DesktopUserManagement
                         </div>
                         <div>
                           <div className="font-bold text-foreground text-sm tracking-tight leading-none">{user.fullName}</div>
-                          <div className="text-[10px] text-muted-foreground font-mono mt-1 opacity-70">
-                            {user.username}
+                          <div className="mt-1 space-y-0.5">
+                            <div className="text-[10px] text-muted-foreground font-mono opacity-70">
+                              @{user.username}
+                            </div>
+                            {user.email && (
+                              <div className="text-[10px] text-muted-foreground opacity-60">
+                                {user.email}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -287,7 +299,17 @@ export function DesktopUserManagement({ users, setUsers }: DesktopUserManagement
                   className="h-12 bg-background/50 border-border/50 rounded-xl px-4 font-bold focus-visible:ring-4 focus-visible:ring-black/5 focus-visible:border-black transition-all"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Email Address</Label>
+                  <Input 
+                    type="email"
+                    placeholder="john.smith@company.com"
+                    value={newUser.email}
+                    onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                    className="h-12 bg-background/50 border-border/50 rounded-xl px-4 font-bold focus-visible:ring-4 focus-visible:ring-black/5 focus-visible:border-black transition-all"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Username</Label>
                   <Input 

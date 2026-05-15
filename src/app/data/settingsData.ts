@@ -93,6 +93,7 @@ export const users: User[] = [
     role: 'OPERATOR',
     isActive: true,
     forcePasswordChange: false,
+    email: 'john.smith@teragon.local',
     password: 'password123',
     createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
   },
@@ -103,6 +104,7 @@ export const users: User[] = [
     role: 'OPERATOR',
     isActive: true,
     forcePasswordChange: false,
+    email: 'sarah.jones@teragon.local',
     password: 'password123',
     createdAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString()
   },
@@ -113,6 +115,7 @@ export const users: User[] = [
     role: 'LEAD',
     isActive: true,
     forcePasswordChange: false,
+    email: 'mike.davis@teragon.local',
     password: 'password123',
     createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString()
   },
@@ -123,6 +126,7 @@ export const users: User[] = [
     role: 'ADMIN',
     isActive: true,
     forcePasswordChange: false,
+    email: 'admin@teragon.local',
     password: 'password123',
     createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
   }
