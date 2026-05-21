@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, memo } from 'react';
-import { Measurement, Severity, DisplaySettings, AnomalyConfig } from '../../app/types';
+import { Measurement, Severity, DisplaySettings, AnomalyConfig, Alert } from '../../app/types';
 import { getAnomalyConfig, getSystemDisplayName } from '../../app/data/mockData';
 import { SeverityBadge } from '../../app/components/AlertBadge';
 import { getRelativeTime, formatExpandedTime, getSeverityColor } from '../utils/formatters';
@@ -117,6 +117,63 @@ export const DesktopAlertCard = memo(({
     });
   }, [measurement.alerts, anomalyConfigs]);
 
+  interface AlertGroup {
+    id: string;
+    startPos: number;
+    endPos: number;
+    alerts: typeof visibleAlerts;
+    highestSeverity: Severity;
+  }
+
+  const alertGroups = useMemo(() => {
+    if (visibleAlerts.length === 0) return [];
+    
+    const sorted = [...visibleAlerts].sort((a, b) => a.startPos - b.startPos);
+    
+    const groups: AlertGroup[] = [];
+    let currentGroup: AlertGroup = {
+      id: sorted[0].id,
+      startPos: sorted[0].startPos,
+      endPos: Math.min(sorted[0].startPos + sorted[0].length, measurement.productLength),
+      alerts: [sorted[0]],
+      highestSeverity: sorted[0].severity
+    };
+    
+    const severityValue = (s: Severity): number => {
+      switch (s) {
+        case 'CRITICAL': return 4;
+        case 'HIGH': return 3;
+        case 'MEDIUM': return 2;
+        case 'LOW': return 1;
+        default: return 0;
+      }
+    };
+    
+    for (let i = 1; i < sorted.length; i++) {
+      const alert = sorted[i];
+      const alertEnd = Math.min(alert.startPos + alert.length, measurement.productLength);
+      
+      if (alert.startPos <= currentGroup.endPos) {
+        currentGroup.endPos = Math.max(currentGroup.endPos, alertEnd);
+        currentGroup.alerts.push(alert);
+        if (severityValue(alert.severity) > severityValue(currentGroup.highestSeverity)) {
+          currentGroup.highestSeverity = alert.severity;
+        }
+      } else {
+        groups.push(currentGroup);
+        currentGroup = {
+          id: alert.id,
+          startPos: alert.startPos,
+          endPos: alertEnd,
+          alerts: [alert],
+          highestSeverity: alert.severity
+        };
+      }
+    }
+    groups.push(currentGroup);
+    return groups;
+  }, [visibleAlerts, measurement.productLength]);
+
   const activeAlerts = useMemo(() => visibleAlerts.filter(a => a.currentState === 'NEW'), [visibleAlerts]);
   const isAcknowledged = useMemo(() => isSessionAck || visibleAlerts.every(a => a.currentState === 'ACKNOWLEDGED'), [isSessionAck, visibleAlerts]);
 
@@ -166,7 +223,13 @@ export const DesktopAlertCard = memo(({
         filter: 'blur(10px)',
         transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] }
       }}
-      onClick={() => { if (isSelectionMode) onToggleSelect?.(); }}
+      onClick={() => { 
+        if (isSelectionMode) {
+          onToggleSelect?.(); 
+        } else {
+          setSelectedAlertId(null);
+        }
+      }}
       className={`group bg-card/80 backdrop-blur-xl border rounded-[32px] overflow-hidden transition-all duration-500 relative ${
         isSelectionMode && isSelected
           ? 'border-black ring-2 ring-black/10 shadow-2xl z-10 cursor-pointer'
@@ -315,6 +378,7 @@ export const DesktopAlertCard = memo(({
                   onMouseLeave={() => setScrubberPos(null)}
                   className="h-10 bg-muted/50 rounded-xl relative border border-border/50 cursor-crosshair group/ruler"
                 >
+                  {/* Ruler background & markers layer */}
                   <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none">
                     {/* Scale Markers */}
                     <div className="absolute inset-0 flex justify-between px-1 opacity-[0.07]">
@@ -322,37 +386,88 @@ export const DesktopAlertCard = memo(({
                         <div key={i} className={`w-px bg-black ${i % 5 === 0 ? 'h-full' : 'h-1/2 mt-auto'}`} />
                       ))}
                     </div>
+                  </div>
 
-                    {/* Alerts / Anomalies */}
-                    {visibleAlerts.map((alert) => {
-                      const startPercent = (alert.startPos / measurement.productLength) * 100;
-                      const widthPercent = (alert.length / measurement.productLength) * 100;
-                      const isSelected = selectedAlertId === alert.id;
-                      
-                      return (
+                  {/* Interactive Anomaly groups */}
+                  {alertGroups.map((group) => {
+                    const startPercent = (group.startPos / measurement.productLength) * 100;
+                    const endPercent = (group.endPos / measurement.productLength) * 100;
+                    const widthPercent = Math.max(0.5, endPercent - startPercent);
+                    const isGroupSelected = group.alerts.some(a => a.id === selectedAlertId);
+
+                    const handleGroupClick = (e: React.MouseEvent) => {
+                      e.stopPropagation();
+
+                      let nextAlert: Alert | null = null;
+                      if (group.alerts.length === 1) {
+                        const alert = group.alerts[0];
+                        setSelectedAlertId(selectedAlertId === alert.id ? null : alert.id);
+                        nextAlert = selectedAlertId === alert.id ? null : alert;
+                      } else {
+                        const currentIndex = group.alerts.findIndex(a => a.id === selectedAlertId);
+                        if (currentIndex === -1) {
+                          nextAlert = group.alerts[0];
+                          setSelectedAlertId(nextAlert.id);
+                        } else {
+                          const nextIndex = (currentIndex + 1) % group.alerts.length;
+                          nextAlert = group.alerts[nextIndex];
+                          setSelectedAlertId(nextAlert.id);
+                        }
+                      }
+
+                      // Expand or sync shelf state
+                      if (nextAlert) {
+                        const hasDetails = !!nextAlert.technicalDetails;
+                        if (hasDetails) {
+                          setIsExpanded(true);
+                        }
+                      }
+                      setShowAcknowledgeForm(false);
+                    };
+
+                    return (
+                      <div
+                        key={group.id}
+                        className="absolute top-0 bottom-0"
+                        style={{
+                          left: `${startPercent}%`,
+                          width: `${widthPercent}%`,
+                          zIndex: isGroupSelected ? 35 : 20,
+                        }}
+                      >
+                        {/* Overlap Count Badge directly above the ruler segment */}
+                        {group.alerts.length > 1 && (
+                          <div
+                            className="absolute bottom-[calc(100%+4px)] left-1/2 -translate-x-1/2 bg-black text-white px-1.5 py-0.5 rounded-full text-[9px] font-black z-30 pointer-events-none shadow flex items-center justify-center border whitespace-nowrap"
+                            style={{
+                              borderColor: getSeverityColor(group.highestSeverity)
+                            }}
+                          >
+                            +{group.alerts.length - 1}
+                          </div>
+                        )}
+
                         <motion.div
-                          key={alert.id}
                           initial={{ scaleX: 0 }}
                           animate={{ 
                             scaleX: 1,
-                            opacity: selectedAlertId && !isSelected ? 0.25 : 1,
-                            backgroundColor: getSeverityColor(alert.severity),
-                            scaleY: isSelected ? 1.4 : 1,
-                            zIndex: isSelected ? 30 : 10,
+                            opacity: selectedAlertId && !isGroupSelected ? 0.25 : 1,
+                            backgroundColor: getSeverityColor(group.highestSeverity),
+                            scaleY: isGroupSelected ? 1.3 : 1,
                           }}
                           transition={{ duration: 0.2, ease: "easeOut" }}
-                          className={`absolute top-0 bottom-0 origin-left mix-blend-multiply ${
-                            isSelected ? 'ring-2 ring-black ring-inset shadow-lg' : ''
+                          onClick={handleGroupClick}
+                          className={`w-full h-full rounded cursor-pointer ${
+                            isGroupSelected ? 'ring-2 ring-black ring-inset shadow-lg' : 'hover:opacity-90'
                           }`}
                           style={{
-                            left: `${startPercent}%`,
-                            width: `${widthPercent}%`,
-                            borderRadius: isSelected ? '6px' : '2px'
+                            originX: 0,
+                            borderRadius: isGroupSelected ? '6px' : '2px'
                           }}
                         />
-                      );
-                    })}
-                  </div>
+                      </div>
+                    );
+                  })}
 
                   {/* Scrubber (Black Cursor) */}
                   <AnimatePresence>

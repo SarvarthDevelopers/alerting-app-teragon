@@ -102,6 +102,32 @@ export const mockMeasurements: Measurement[] = [
         technicalDetails: 'Thermal gradient deviation detected. Surface temperature reached 1240°C, exceeding safety threshold by 45°C. Immediate cooling adjustment required.'
       },
       {
+        id: 'a1_overlap_1',
+        measurementId: 'm1',
+        anomalyType: 'DIMENSIONAL_VARIANCE',
+        startPos: 2500,
+        length: 200,
+        severity: 'HIGH',
+        currentState: 'NEW',
+        priority: 2,
+        createdAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
+        updatedAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
+        technicalDetails: 'Localized thickness variation detected in the thermal gradient area.'
+      },
+      {
+        id: 'a1_overlap_2',
+        measurementId: 'm1',
+        anomalyType: 'SURFACE_ROUGHNESS',
+        startPos: 2400,
+        length: 450,
+        severity: 'MEDIUM',
+        currentState: 'NEW',
+        priority: 3,
+        createdAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
+        updatedAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
+        technicalDetails: 'Surface roughness deviation overlapping visual defect zone.'
+      },
+      {
         id: 'a2',
         measurementId: 'm1',
         anomalyType: 'SURFACE_ROUGHNESS',
@@ -190,6 +216,19 @@ export const mockMeasurements: Measurement[] = [
         priority: 2,
         createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
         updatedAt: new Date(Date.now() - 15 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'a5_overlap',
+        measurementId: 'm5',
+        anomalyType: 'FLATNESS_DEVIATION',
+        startPos: 1850,
+        length: 150,
+        severity: 'CRITICAL',
+        currentState: 'NEW',
+        priority: 1,
+        createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+        updatedAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+        technicalDetails: 'Severe localized flatness deviation exceeding maximum allowable structural tolerance.'
       },
       {
         id: 'a6',

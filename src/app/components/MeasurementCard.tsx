@@ -78,6 +78,63 @@ export const MeasurementCard = memo(({
     });
   }, [measurement.alerts, anomalyConfigs]);
 
+  interface AlertGroup {
+    id: string;
+    startPos: number;
+    endPos: number;
+    alerts: typeof visibleAlerts;
+    highestSeverity: Severity;
+  }
+
+  const alertGroups = useMemo(() => {
+    if (visibleAlerts.length === 0) return [];
+    
+    const sorted = [...visibleAlerts].sort((a, b) => a.startPos - b.startPos);
+    
+    const groups: AlertGroup[] = [];
+    let currentGroup: AlertGroup = {
+      id: sorted[0].id,
+      startPos: sorted[0].startPos,
+      endPos: Math.min(sorted[0].startPos + sorted[0].length, measurement.productLength),
+      alerts: [sorted[0]],
+      highestSeverity: sorted[0].severity
+    };
+    
+    const severityValue = (s: Severity): number => {
+      switch (s) {
+        case 'CRITICAL': return 4;
+        case 'HIGH': return 3;
+        case 'MEDIUM': return 2;
+        case 'LOW': return 1;
+        default: return 0;
+      }
+    };
+    
+    for (let i = 1; i < sorted.length; i++) {
+      const alert = sorted[i];
+      const alertEnd = Math.min(alert.startPos + alert.length, measurement.productLength);
+      
+      if (alert.startPos <= currentGroup.endPos) {
+        currentGroup.endPos = Math.max(currentGroup.endPos, alertEnd);
+        currentGroup.alerts.push(alert);
+        if (severityValue(alert.severity) > severityValue(currentGroup.highestSeverity)) {
+          currentGroup.highestSeverity = alert.severity;
+        }
+      } else {
+        groups.push(currentGroup);
+        currentGroup = {
+          id: alert.id,
+          startPos: alert.startPos,
+          endPos: alertEnd,
+          alerts: [alert],
+          highestSeverity: alert.severity
+        };
+      }
+    }
+    groups.push(currentGroup);
+    return groups;
+  }, [visibleAlerts, measurement.productLength]);
+
   const [internalIsExpanded, setInternalIsExpanded] = useState(forceCollapsed ? false : hasAlerts);
   const isExpanded = externalIsExpanded !== undefined ? externalIsExpanded : internalIsExpanded;
   const setIsExpanded = (val: boolean) => {
@@ -100,6 +157,16 @@ export const MeasurementCard = memo(({
       setSelectedAlertId(null);
     }
   }, [isExpanded]);
+
+  // Auto-expand the alerts list if the selected alert is hidden under "+ N more"
+  useEffect(() => {
+    if (selectedAlertId) {
+      const idx = visibleAlerts.findIndex(a => a.id === selectedAlertId);
+      if (idx >= 3) {
+        setShowMoreAlerts(true);
+      }
+    }
+  }, [selectedAlertId, visibleAlerts]);
 
   const handleInteraction = (e: React.MouseEvent | React.TouchEvent) => {
     if (!rulerRef.current) return;
@@ -189,6 +256,7 @@ export const MeasurementCard = memo(({
   return (
     <div
       className="bg-card rounded-xl border relative overflow-hidden"
+      onClick={() => setSelectedAlertId(null)}
       style={{
         borderColor: borderColor,
       }}
@@ -270,7 +338,7 @@ export const MeasurementCard = memo(({
                 )}
                 <div
                   ref={rulerRef}
-                  className="relative w-full h-12 bg-muted/30 rounded-xl overflow-hidden cursor-crosshair touch-none"
+                  className="relative w-full h-12 cursor-crosshair touch-none"
                   onMouseMove={handleInteraction}
                   onMouseDown={handleInteraction}
                   onTouchMove={handleInteraction}
@@ -278,43 +346,83 @@ export const MeasurementCard = memo(({
                   onMouseLeave={() => setScrubberPos(null)}
                   onTouchEnd={() => setScrubberPos(null)}
                 >
-                  {/* Scale Markers Layer */}
-                  <div className="absolute inset-0 flex justify-between px-1 opacity-10 pointer-events-none">
-                    {Array.from({ length: 20 }).map((_, i) => (
-                      <div key={i} className={`w-px bg-foreground ${i % 5 === 0 ? 'h-full' : 'h-1/2 mt-auto'}`} />
-                    ))}
+                  {/* Ruler track background layer with scale markers */}
+                  <div className="absolute inset-0 bg-muted/30 rounded-xl overflow-hidden pointer-events-none">
+                    {/* Scale Markers Layer */}
+                    <div className="absolute inset-0 flex justify-between px-1 opacity-10">
+                      {Array.from({ length: 20 }).map((_, i) => (
+                        <div key={i} className={`w-px bg-foreground ${i % 5 === 0 ? 'h-full' : 'h-1/2 mt-auto'}`} />
+                      ))}
+                    </div>
                   </div>
 
-                   {/* Anomaly bars */}
-                  {visibleAlerts.map(alert => {
-                    const startPercent = (alert.startPos / measurement.productLength) * 100;
-                    const widthPercent = (alert.length / measurement.productLength) * 100;
-                    const hasDetails = !!alert.technicalDetails;
-                    const isSelected = selectedAlertId === alert.id;
+                   {/* Anomaly groups */}
+                  {alertGroups.map(group => {
+                    const startPercent = (group.startPos / measurement.productLength) * 100;
+                    const endPercent = (group.endPos / measurement.productLength) * 100;
+                    const widthPercent = Math.max(0.5, endPercent - startPercent); // ensure tiny anomalies are visible
+                    const isGroupSelected = group.alerts.some(a => a.id === selectedAlertId);
+
+                    const handleGroupTap = (e: React.MouseEvent | React.TouchEvent) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+
+                      if (group.alerts.length === 1) {
+                        const alert = group.alerts[0];
+                        setSelectedAlertId(selectedAlertId === alert.id ? null : alert.id);
+                      } else {
+                        const currentIndex = group.alerts.findIndex(a => a.id === selectedAlertId);
+                        if (currentIndex === -1) {
+                          setSelectedAlertId(group.alerts[0].id);
+                        } else {
+                          const nextIndex = (currentIndex + 1) % group.alerts.length;
+                          setSelectedAlertId(group.alerts[nextIndex].id);
+                        }
+                      }
+                    };
 
                     return (
-                      <motion.div
-                        key={alert.id}
-                        initial={{ scaleX: 0 }}
-                        animate={{ 
-                          scaleX: 1, 
-                          backgroundColor: getSeverityColor(alert.severity),
-                        }}
-                        transition={{ duration: 0.5, ease: 'easeOut' }}
-                        onClick={(e) => {
-                          if (hasDetails) {
-                            e.stopPropagation();
-                            setSelectedAlertId(isSelected ? null : alert.id);
-                          }
-                        }}
-                        className={`absolute top-0 bottom-0 origin-left mix-blend-multiply ${hasDetails ? 'cursor-pointer active:opacity-60' : ''}`}
+                      <div
+                        key={group.id}
+                        className="absolute top-0 bottom-0"
+                        onClick={(e) => e.stopPropagation()}
                         style={{
                           left: `${startPercent}%`,
                           width: `${widthPercent}%`,
-                          zIndex: isSelected ? 10 : 1,
-                          border: isSelected ? '2px solid black' : 'none'
+                          zIndex: isGroupSelected ? 15 : 10
                         }}
-                      />
+                      >
+                        {/* Overlap Count Badge directly above the ruler segment */}
+                        {group.alerts.length > 1 && (
+                          <div
+                            className="absolute bottom-[calc(100%+4px)] left-1/2 -translate-x-1/2 bg-black text-white px-1.5 py-0.5 rounded-full text-[9px] font-black z-30 pointer-events-none shadow flex items-center justify-center border whitespace-nowrap"
+                            style={{
+                              borderColor: getSeverityColor(group.highestSeverity)
+                            }}
+                          >
+                            +{group.alerts.length - 1}
+                          </div>
+                        )}
+
+                        <motion.div
+                          initial={{ scaleX: 0 }}
+                          animate={{ 
+                            scaleX: 1, 
+                            backgroundColor: getSeverityColor(group.highestSeverity),
+                          }}
+                          transition={{ duration: 0.5, ease: 'easeOut' }}
+                          onMouseDown={handleGroupTap}
+                          onTouchStart={handleGroupTap}
+                          onClick={(e) => e.stopPropagation()}
+                          className={`w-full h-full rounded cursor-pointer ${
+                            isGroupSelected ? 'ring-2 ring-black shadow-lg scale-y-110' : 'hover:opacity-90'
+                          }`}
+                          style={{
+                            originX: 0,
+                            border: isGroupSelected ? '2px solid black' : 'none'
+                          }}
+                        />
+                      </div>
                     );
                   })}
 
@@ -346,40 +454,50 @@ export const MeasurementCard = memo(({
                           const hasDetails = !!alert.technicalDetails;
                           const isSelected = selectedAlertId === alert.id;
 
+                          const isAnyAlertSelected = selectedAlertId !== null;
+                          const isDimmed = isAnyAlertSelected && !isSelected;
+
                           return (
                             <div 
                               key={alert.id} 
                               onClick={(e) => {
-                                if (hasDetails) {
-                                  e.stopPropagation();
-                                  setSelectedAlertId(isSelected ? null : alert.id);
-                                }
+                                e.stopPropagation();
+                                setSelectedAlertId(isSelected ? null : alert.id);
                               }}
-                              className={`py-1.5 transition-all ${hasDetails ? 'active:opacity-60' : ''}`}
+                              className="py-1.5 transition-all cursor-pointer"
                             >
                               <div className="flex items-center gap-2">
                                 <div 
-                                  className="w-1.5 h-1.5 rounded-full shrink-0" 
-                                  style={{ backgroundColor: getSeverityColor(alert.severity) }} 
+                                  className="w-1.5 h-1.5 rounded-full shrink-0 transition-all duration-200" 
+                                  style={{ 
+                                    backgroundColor: getSeverityColor(alert.severity),
+                                    opacity: isDimmed ? 0.35 : 1
+                                  }} 
                                 />
-                                <div className="flex-1 text-sm">
-                                  <span className={`font-bold text-foreground ${hasDetails ? 'border-b-[1.5px] border-dotted border-foreground/80' : ''}`}>
+                                <div className="flex-1 text-sm transition-all duration-200">
+                                  <span className={`transition-all duration-200 ${
+                                    isDimmed 
+                                      ? 'font-normal text-muted-foreground/50' 
+                                      : 'font-bold text-foreground'
+                                  } ${hasDetails ? 'border-b-[1.5px] border-dotted border-foreground/80' : ''}`}>
                                     {config?.displayName || alert.anomalyType}:
                                   </span>
-                                  <span className={`text-muted-foreground ml-1 font-sans`}>
+                                  <span className={`text-muted-foreground ml-1 font-sans transition-all duration-200 ${
+                                    isDimmed ? 'opacity-35' : 'opacity-100'
+                                  }`}>
                                     {formatLength(alert.startPos)} - {formatLength(endPos)}
                                   </span>
                                 </div>
                               </div>
                               <AnimatePresence>
-                                {isSelected && (
+                                {isSelected && hasDetails && (
                                   <motion.div
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: 'auto', opacity: 1 }}
                                     exit={{ height: 0, opacity: 0 }}
                                     className="overflow-hidden"
                                   >
-                                    <div className="ml-3.5 mt-1 pb-1">
+                                    <div className="ml-3.5 mt-1.5 pb-1">
                                       <p className="text-sm font-normal leading-relaxed text-foreground/70 italic font-sans">
                                         {alert.technicalDetails}
                                       </p>
@@ -504,18 +622,19 @@ export const MeasurementCard = memo(({
             className="relative h-4 w-full bg-card border-t border-[#dedede] overflow-hidden"
           >
             <div className="absolute inset-0">
-              {visibleAlerts.map(alert => {
-                const startPercent = (alert.startPos / measurement.productLength) * 100;
-                const widthPercent = (alert.length / measurement.productLength) * 100;
+              {alertGroups.map(group => {
+                const startPercent = (group.startPos / measurement.productLength) * 100;
+                const endPercent = (group.endPos / measurement.productLength) * 100;
+                const widthPercent = Math.max(0.5, endPercent - startPercent);
 
                 return (
                   <div
-                    key={alert.id}
+                    key={group.id}
                     className="absolute top-0 bottom-0"
                     style={{
                       left: `${startPercent}%`,
                       width: `${widthPercent}%`,
-                      backgroundColor: getSeverityColor(alert.severity)
+                      backgroundColor: getSeverityColor(group.highestSeverity)
                     }}
                   />
                 );
