@@ -416,6 +416,31 @@ export const mockMeasurements: Measurement[] = [
     productLength: 10400,
     productType: 'Sheet Metal',
     alerts: []
+  },
+  {
+    id: 'm24',
+    serialNumber: 'SN-98675',
+    system: 'SURFACE_INSPECTION',
+    timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+    productLength: 20000,
+    productType: 'Heavy Gauge Plate',
+    alerts: Array.from({ length: 320 }).map((_, i) => {
+      const anomalyTypes: ('VISUAL_DEFECT' | 'SURFACE_ROUGHNESS' | 'DIMENSIONAL_VARIANCE')[] = ['VISUAL_DEFECT', 'SURFACE_ROUGHNESS', 'DIMENSIONAL_VARIANCE'];
+      const severities: ('CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW')[] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
+      return {
+        id: `a_high_density_${i}`,
+        measurementId: 'm24',
+        anomalyType: anomalyTypes[i % 3],
+        startPos: (i * 60) + (Math.random() * 20),
+        length: 15 + (Math.random() * 25),
+        severity: severities[i % 4],
+        currentState: 'NEW',
+        priority: (i % 4) + 1,
+        createdAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+        updatedAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+        technicalDetails: i % 10 === 0 ? `High-density inspection detail for anomaly ${i}. Micro-fracture detected in zone ${Math.floor(i / 10)}.` : undefined
+      };
+    })
   }
 ];
 

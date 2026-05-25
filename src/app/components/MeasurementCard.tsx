@@ -4,6 +4,7 @@ import { getSystemDisplayName } from '../data/mockData';
 import { SeverityBadge } from './AlertBadge';
 import { ChevronDown, ChevronUp, Info, ArrowLeft, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { InspectionDrawer } from './InspectionDrawer';
 
 const getRelativeTime = (timestamp: string): string => {
   const now = new Date();
@@ -145,8 +146,9 @@ export const MeasurementCard = memo(({
     }
   };
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [isAcknowledging, setIsAcknowledging] = useState(false);
   const [showMoreAlerts, setShowMoreAlerts] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isAcknowledging, setIsAcknowledging] = useState(false);
   const [scrubberPos, setScrubberPos] = useState<number | null>(null);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const rulerRef = useRef<HTMLDivElement>(null);
@@ -404,21 +406,15 @@ export const MeasurementCard = memo(({
                           </div>
                         )}
 
-                        <motion.div
-                          initial={{ scaleX: 0 }}
-                          animate={{ 
-                            scaleX: 1, 
-                            backgroundColor: getSeverityColor(group.highestSeverity),
-                          }}
-                          transition={{ duration: 0.5, ease: 'easeOut' }}
+                        <div
                           onMouseDown={handleGroupTap}
                           onTouchStart={handleGroupTap}
                           onClick={(e) => e.stopPropagation()}
-                          className={`w-full h-full rounded cursor-pointer ${
+                          className={`w-full h-full rounded-none cursor-pointer transition-all ${
                             isGroupSelected ? 'ring-2 ring-black shadow-lg scale-y-110' : 'hover:opacity-90'
                           }`}
                           style={{
-                            originX: 0,
+                            backgroundColor: getSeverityColor(group.highestSeverity),
                             border: isGroupSelected ? '2px solid black' : 'none'
                           }}
                         />
@@ -439,8 +435,8 @@ export const MeasurementCard = memo(({
               {hasAlerts && (
                 <div className="space-y-2 mb-4">
                   {(() => {
-                    const maxDisplay = 3;
-                    const displayedAlerts = showMoreAlerts ? visibleAlerts : visibleAlerts.slice(0, maxDisplay);
+                    const maxDisplay = 5;
+                    const displayedAlerts = visibleAlerts.slice(0, maxDisplay);
                     const remainingCount = visibleAlerts.length - maxDisplay;
 
                     return (
@@ -513,19 +509,11 @@ export const MeasurementCard = memo(({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setShowMoreAlerts(!showMoreAlerts);
+                              setIsDrawerOpen(true);
                             }}
-                            className="mt-2 text-[10px] font-black text-foreground uppercase tracking-widest bg-foreground/5 px-3 py-2 rounded-xl border border-foreground/10 hover:bg-foreground/10 transition-colors flex items-center gap-2"
+                            className="mt-3 w-full text-[12px] font-black text-foreground uppercase tracking-widest bg-foreground/5 py-3 rounded-xl border border-foreground/10 hover:bg-foreground/10 transition-colors flex items-center justify-center gap-2"
                           >
-                            {showMoreAlerts ? (
-                              <>
-                                Show Less <ChevronUp size={12} />
-                              </>
-                            ) : (
-                              <>
-                                + {remainingCount} more anomalies <ChevronDown size={12} />
-                              </>
-                            )}
+                            + {remainingCount} MORE / INSPECT ALL
                           </button>
                         )}
                       </>
@@ -643,6 +631,14 @@ export const MeasurementCard = memo(({
           </motion.div>
         )}
       </AnimatePresence>
+
+      <InspectionDrawer 
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        measurement={measurement}
+        anomalyConfigs={anomalyConfigs}
+        displaySettings={displaySettings}
+      />
     </div>
   );
 });

@@ -55,28 +55,7 @@ export const DesktopAlertCard = memo(({
   const [isResolving, setIsResolving] = useState(false);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [showAcknowledgeForm, setShowAcknowledgeForm] = useState(false);
-  const [showMoreShelf, setShowMoreShelf] = useState(false);
   const rulerRef = useRef<HTMLDivElement>(null);
-  const shelfRef = useRef<HTMLDivElement>(null);
-  const dragData = useRef({ isDragging: false, startX: 0, scrollLeft: 0 });
-
-  const handleShelfMouseDown = (e: React.MouseEvent) => {
-    if (!shelfRef.current) return;
-    dragData.current.isDragging = true;
-    dragData.current.startX = e.pageX - shelfRef.current.offsetLeft;
-    dragData.current.scrollLeft = shelfRef.current.scrollLeft;
-  };
-
-  const handleShelfMouseLeave = () => { dragData.current.isDragging = false; };
-  const handleShelfMouseUp = () => { dragData.current.isDragging = false; };
-
-  const handleShelfMouseMove = (e: React.MouseEvent) => {
-    if (!dragData.current.isDragging || !shelfRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - shelfRef.current.offsetLeft;
-    const walk = (x - dragData.current.startX) * 2;
-    shelfRef.current.scrollLeft = dragData.current.scrollLeft - walk;
-  };
 
   const springTransition = {
     type: 'spring',
@@ -94,7 +73,6 @@ export const DesktopAlertCard = memo(({
   useEffect(() => {
     if (!isExpanded) {
       setShowAcknowledgeForm(false);
-      setShowMoreShelf(false);
     }
   }, [isExpanded]);
 
@@ -109,6 +87,9 @@ export const DesktopAlertCard = memo(({
 
   const hasAlerts = measurement.alerts.length > 0;
   
+  const [currentPage, setCurrentPage] = useState(0);
+  const PAGE_SIZE = 10;
+  
   // Filter alerts based on active anomaly types
   const visibleAlerts = useMemo(() => {
     return measurement.alerts.filter(alert => {
@@ -116,6 +97,29 @@ export const DesktopAlertCard = memo(({
       return config?.isActive !== false;
     });
   }, [measurement.alerts, anomalyConfigs]);
+
+  const totalPages = Math.ceil(visibleAlerts.length / PAGE_SIZE);
+
+  const paginatedAlerts = useMemo(() => {
+    const sorted = [...visibleAlerts].sort((a, b) => a.startPos - b.startPos);
+    const startIdx = currentPage * PAGE_SIZE;
+    return sorted.slice(startIdx, startIdx + PAGE_SIZE);
+  }, [visibleAlerts, currentPage]);
+
+  const rulerBounds = useMemo(() => {
+    if (paginatedAlerts.length === 0) {
+      return { start: 0, end: measurement.productLength };
+    }
+    const firstAlert = paginatedAlerts[0];
+    const lastAlert = paginatedAlerts[paginatedAlerts.length - 1];
+    
+    // 5% padding
+    const padding = measurement.productLength * 0.05;
+    const start = Math.max(0, firstAlert.startPos - padding);
+    const end = Math.min(measurement.productLength, lastAlert.startPos + lastAlert.length + padding);
+    
+    return { start, end };
+  }, [paginatedAlerts, measurement.productLength]);
 
   interface AlertGroup {
     id: string;
@@ -126,9 +130,9 @@ export const DesktopAlertCard = memo(({
   }
 
   const alertGroups = useMemo(() => {
-    if (visibleAlerts.length === 0) return [];
+    if (paginatedAlerts.length === 0) return [];
     
-    const sorted = [...visibleAlerts].sort((a, b) => a.startPos - b.startPos);
+    const sorted = [...paginatedAlerts].sort((a, b) => a.startPos - b.startPos);
     
     const groups: AlertGroup[] = [];
     let currentGroup: AlertGroup = {
@@ -172,7 +176,7 @@ export const DesktopAlertCard = memo(({
     }
     groups.push(currentGroup);
     return groups;
-  }, [visibleAlerts, measurement.productLength]);
+  }, [paginatedAlerts, measurement.productLength]);
 
   const activeAlerts = useMemo(() => visibleAlerts.filter(a => a.currentState === 'NEW'), [visibleAlerts]);
   const isAcknowledged = useMemo(() => isSessionAck || visibleAlerts.every(a => a.currentState === 'ACKNOWLEDGED'), [isSessionAck, visibleAlerts]);
@@ -358,7 +362,12 @@ export const DesktopAlertCard = memo(({
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-end">
+              <div className="flex items-center justify-between w-full">
+                {totalPages > 1 ? (
+                  <span className="text-[10px] font-black text-foreground/50 uppercase tracking-widest">
+                    Viewport: {formatLength(rulerBounds.start)} - {formatLength(rulerBounds.end)}
+                  </span>
+                ) : <span />}
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
@@ -390,8 +399,9 @@ export const DesktopAlertCard = memo(({
 
                   {/* Interactive Anomaly groups */}
                   {alertGroups.map((group) => {
-                    const startPercent = (group.startPos / measurement.productLength) * 100;
-                    const endPercent = (group.endPos / measurement.productLength) * 100;
+                    const rulerSpan = rulerBounds.end - rulerBounds.start;
+                    const startPercent = ((group.startPos - rulerBounds.start) / rulerSpan) * 100;
+                    const endPercent = ((group.endPos - rulerBounds.start) / rulerSpan) * 100;
                     const widthPercent = Math.max(0.5, endPercent - startPercent);
                     const isGroupSelected = group.alerts.some(a => a.id === selectedAlertId);
 
@@ -457,12 +467,11 @@ export const DesktopAlertCard = memo(({
                           }}
                           transition={{ duration: 0.2, ease: "easeOut" }}
                           onClick={handleGroupClick}
-                          className={`w-full h-full rounded cursor-pointer ${
+                          className={`w-full h-full rounded-none cursor-pointer ${
                             isGroupSelected ? 'ring-2 ring-black ring-inset shadow-lg' : 'hover:opacity-90'
                           }`}
                           style={{
-                            originX: 0,
-                            borderRadius: isGroupSelected ? '6px' : '2px'
+                            originX: 0
                           }}
                         />
                       </div>
@@ -486,7 +495,7 @@ export const DesktopAlertCard = memo(({
                           className="absolute top-0 -translate-x-1/2 -translate-y-[calc(100%+12px)] bg-black text-white px-3 py-1.5 rounded-full shadow-2xl text-[10px] font-black whitespace-nowrap flex items-center gap-2"
                         >
                           <span className="opacity-60 font-medium uppercase tracking-tighter">Pos</span>
-                          {formatLength((scrubberPos / 100) * measurement.productLength)}
+                          {formatLength(rulerBounds.start + (scrubberPos / 100) * (rulerBounds.end - rulerBounds.start))}
                           <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-black" />
                         </motion.div>
                       </motion.div>
@@ -496,99 +505,74 @@ export const DesktopAlertCard = memo(({
               </div>
 
               <div className="flex flex-wrap items-center gap-2 mt-1">
-                {(() => {
-                  const maxDisplay = 4;
-                  const displayedAlerts = visibleAlerts.slice(0, maxDisplay);
-                  const remainingCount = visibleAlerts.length - maxDisplay;
+                {paginatedAlerts.map((alert) => {
+                  const config = anomalyConfigs.find(c => c.type === alert.anomalyType);
+                  const endPos = Math.min(alert.startPos + alert.length, measurement.productLength);
+                  const isSelectedForDetail = selectedAlertId === alert.id;
+                  const hasDetails = !!alert.technicalDetails;
 
                   return (
-                    <>
-                      {displayedAlerts.map((alert) => {
-                        const config = anomalyConfigs.find(c => c.type === alert.anomalyType);
-                        const endPos = Math.min(alert.startPos + alert.length, measurement.productLength);
-                        const isHovered = hoveredAlertId === alert.id;
-                        const hasDetails = !!alert.technicalDetails;
-                        const isSelectedForDetail = selectedAlertId === alert.id;
-
-                        return (
-                          <motion.div 
-                            key={alert.id} 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedAlertId(alert.id);
-                              const hasDetails = !!alert.technicalDetails;
-                              
-                              if (hasDetails) {
-                                setIsExpanded(true);
-                              } else {
-                                if (!showMoreShelf) {
-                                  setIsExpanded(false);
-                                }
-                                setShowAcknowledgeForm(false);
-                              }
-                              
-                              setShowAcknowledgeForm(false);
-                            }}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-2xl border backdrop-blur-sm transition-all cursor-pointer ${
-                              isSelectedForDetail 
-                                ? 'bg-[#0a0a0a] border-black text-white' 
-                                : 'bg-black/5 border-black/10 text-foreground/80 hover:border-black/30'
-                            }`}
-                          >
-                            <div 
-                              className={`w-2 h-2 rounded-full shadow-sm transition-transform duration-300 ${isSelectedForDetail ? 'scale-125' : ''}`} 
-                              style={{ backgroundColor: getSeverityColor(alert.severity) }} 
-                            />
-                            <span className={`text-[10px] font-black tracking-tight ${isSelectedForDetail ? 'text-white' : 'text-foreground/80'}`}>
-                              {config?.displayName || alert.anomalyType}
-                            </span>
-                            <span className={`text-[10px] font-bold tabular-nums ${isSelectedForDetail ? 'text-white/60' : 'text-muted-foreground'}`}>
-                              {formatLength(alert.startPos)} - {formatLength(endPos)}
-                            </span>
-                            {hasDetails && (
-                              <div className={`ml-1 w-4.5 h-4.5 rounded-full flex items-center justify-center transition-colors ${isSelectedForDetail ? 'bg-white/20' : 'bg-black/5'}`}>
-                                <Info size={11} className={`${isSelectedForDetail ? 'text-white' : 'text-muted-foreground'}`} />
-                              </div>
-                            )}
-                          </motion.div>
-                        );
-                      })}
-                      {remainingCount > 0 && (
-                        <div 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (showMoreShelf) {
-                            // The Slick Reset: Pack everything away when closing the shelf
-                            setShowMoreShelf(false);
-                            setIsExpanded(false);
-                            setSelectedAlertId(null);
-                          } else {
-                            setIsExpanded(true);
-                            setShowMoreShelf(true);
-                            setShowAcknowledgeForm(false);
-                            const nextFoldAlerts = visibleAlerts.slice(4);
-                            if (nextFoldAlerts.length > 0) {
-                              setSelectedAlertId(nextFoldAlerts[0].id);
-                            }
-                          }
-                        }}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-dashed border-foreground/20 bg-foreground/5 cursor-pointer hover:bg-foreground/10 transition-colors"
-                        >
-                          {showMoreShelf ? (
-                            <span className="text-[10px] font-black uppercase tracking-[0.1em] text-foreground/50 flex items-center gap-1.5">
-                              <X size={12} /> CLOSE
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-black text-foreground tracking-tight uppercase">
-                              + {remainingCount} MORE
-                            </span>
-                          )}
+                    <motion.div 
+                      key={alert.id} 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedAlertId(alert.id);
+                        if (hasDetails) {
+                          setIsExpanded(true);
+                        } else {
+                          setIsExpanded(false);
+                        }
+                        setShowAcknowledgeForm(false);
+                      }}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-2xl border backdrop-blur-sm transition-all cursor-pointer ${
+                        isSelectedForDetail 
+                          ? 'bg-[#0a0a0a] border-black text-white' 
+                          : 'bg-black/5 border-black/10 text-foreground/80 hover:border-black/30'
+                      }`}
+                    >
+                      <div 
+                        className={`w-2 h-2 rounded-full shadow-sm transition-transform duration-300 ${isSelectedForDetail ? 'scale-125' : ''}`} 
+                        style={{ backgroundColor: getSeverityColor(alert.severity) }} 
+                      />
+                      <span className={`text-[10px] font-black tracking-tight ${isSelectedForDetail ? 'text-white' : 'text-foreground/80'}`}>
+                        {config?.displayName || alert.anomalyType}
+                      </span>
+                      <span className={`text-[10px] font-bold tabular-nums ${isSelectedForDetail ? 'text-white/60' : 'text-muted-foreground'}`}>
+                        {formatLength(alert.startPos)} - {formatLength(endPos)}
+                      </span>
+                      {hasDetails && (
+                        <div className={`ml-1 w-4.5 h-4.5 rounded-full flex items-center justify-center transition-colors ${isSelectedForDetail ? 'bg-white/20' : 'bg-black/5'}`}>
+                          <Info size={11} className={`${isSelectedForDetail ? 'text-white' : 'text-muted-foreground'}`} />
                         </div>
                       )}
-                    </>
+                    </motion.div>
                   );
-                })()}
+                })}
               </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between w-full mt-2 pt-2 border-t border-border/30">
+                  <button 
+                    disabled={currentPage === 0}
+                    onClick={(e) => { e.stopPropagation(); setCurrentPage(p => p - 1); }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors ${currentPage === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-black/5 text-foreground/80 hover:text-black'}`}
+                  >
+                    <ArrowLeft size={12} /> Prev
+                  </button>
+                  
+                  <span className="text-[10px] font-bold text-muted-foreground tabular-nums">
+                    Page {currentPage + 1} of {totalPages}
+                  </span>
+
+                  <button 
+                    disabled={currentPage === totalPages - 1}
+                    onClick={(e) => { e.stopPropagation(); setCurrentPage(p => p + 1); }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors ${currentPage === totalPages - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-black/5 text-foreground/80 hover:text-black'}`}
+                  >
+                    Next <ArrowLeft size={12} className="rotate-180" />
+                  </button>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -675,64 +659,7 @@ export const DesktopAlertCard = memo(({
             transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
             className="border-t border-border/50 bg-white overflow-hidden flex flex-col rounded-b-[32px]"
           >
-            {/* Anomaly Pill Shelf (Only if explicitly requested via "+N more") */}
-            {showMoreShelf && (
-              <motion.div layout="position" className="border-b border-border/40 bg-black/[0.02] w-full relative">
-              <div 
-                ref={shelfRef}
-                onMouseDown={handleShelfMouseDown}
-                onMouseLeave={handleShelfMouseLeave}
-                onMouseUp={handleShelfMouseUp}
-                onMouseMove={handleShelfMouseMove}
-                className="flex items-center gap-3 overflow-x-auto px-8 pt-3 pb-[5px] cursor-grab active:cursor-grabbing select-none -scale-y-100 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-black/10 hover:[&::-webkit-scrollbar-thumb]:bg-black/20 [&::-webkit-scrollbar-thumb]:rounded-full"
-              >
-                {visibleAlerts.slice(4).map((alert) => {
-                  const isSelected = selectedAlertId === alert.id;
-                  const config = anomalyConfigs.find(c => c.type === alert.anomalyType);
-                  return (
-                    <div key={alert.id} className="-scale-y-100 flex-none">
-                      <motion.button
-                        layout="position"
-                        className={`flex items-center gap-2 px-4 py-2 rounded-2xl border transition-all ${
-                          isSelected 
-                            ? 'bg-[#0a0a0a] border-black text-white' 
-                            : 'bg-white/80 backdrop-blur-sm border-black/10 hover:border-black/30'
-                        }`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedAlertId(alert.id);
-                          const hasDetails = !!alert.technicalDetails;
-                          
-                          if (hasDetails) {
-                            setIsExpanded(true);
-                          } else {
-                            setShowAcknowledgeForm(false);
-                          }
-                        }}
-                      >
-                        <div 
-                          className={`w-2 h-2 rounded-full shadow-sm transition-transform ${isSelected ? 'scale-110' : ''}`} 
-                          style={{ backgroundColor: getSeverityColor(alert.severity) }} 
-                        />
-                        <span className={`text-[10px] font-black tracking-tight ${isSelected ? 'text-white' : 'text-foreground/80'}`}>
-                          {config?.displayName || alert.anomalyType}
-                        </span>
-                          <span className={`text-[10px] font-bold tabular-nums ${isSelected ? 'text-white/60' : 'text-black/40'}`}>
-                            {formatLength(alert.startPos)} - {formatLength(Math.min(alert.startPos + alert.length, measurement.productLength))}
-                          </span>
-                        {!!alert.technicalDetails && (
-                          <div className={`ml-1 w-4.5 h-4.5 rounded-full flex items-center justify-center transition-colors ${isSelected ? 'bg-white/10' : 'bg-black/5'}`}>
-                            <Info size={11} className={isSelected ? 'text-white' : 'text-muted-foreground'} />
-                          </div>
-                        )}
-                      </motion.button>
-                    </div>
-                  );
-                })}
-                 <div className="w-4 shrink-0 -scale-y-100" />
-              </div>
-            </motion.div>
-            )}
+            {/* Anomaly Pill Shelf Removed in favor of inline pagination */}
             <div className="relative w-full">
             <AnimatePresence mode="popLayout" initial={false}>
             {(() => {
