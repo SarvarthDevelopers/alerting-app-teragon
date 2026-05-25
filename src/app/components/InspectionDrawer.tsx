@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
 import { Measurement, AnomalyConfig, DisplaySettings } from '../types';
@@ -32,6 +32,19 @@ export function InspectionDrawer({
   const [activeIndex, setActiveIndex] = useState(0);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isAcknowledging, setIsAcknowledging] = useState(false);
+
+  // References to lock scroll Y-center tracking during programmatically-triggered smooth scrolls
+  const isProgrammaticScrolling = useRef(false);
+  const scrollTimeoutRef = useRef<number | null>(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        window.clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Dynamic ruler window state tracking what is currently visible in the list viewport
   const [visibleWindow, setVisibleWindow] = useState({ start: 0, end: 3000 });
@@ -156,7 +169,10 @@ export function InspectionDrawer({
         }
       });
 
-      setActiveIndex(closestRowIndex);
+      // Avoid overriding the selected index while programmatic smooth scroll is animating
+      if (!isProgrammaticScrolling.current) {
+        setActiveIndex(closestRowIndex);
+      }
 
       if (visibleIndices.length > 0) {
         const firstIdx = visibleIndices[0];
@@ -190,6 +206,14 @@ export function InspectionDrawer({
   const handleItemClick = (index: number) => {
     if (!listElement) return;
     
+    // Lock active index updates during smooth scroll animation
+    isProgrammaticScrolling.current = true;
+    setActiveIndex(index);
+
+    if (scrollTimeoutRef.current) {
+      window.clearTimeout(scrollTimeoutRef.current);
+    }
+    
     const rows = listElement.querySelectorAll<HTMLElement>('.anomaly-row');
     const row = rows[index];
     if (row) {
@@ -202,7 +226,11 @@ export function InspectionDrawer({
         behavior: 'smooth'
       });
     }
-    setActiveIndex(index);
+
+    // Release programmatic scroll lock after transition finishes (approx 500ms)
+    scrollTimeoutRef.current = window.setTimeout(() => {
+      isProgrammaticScrolling.current = false;
+    }, 500);
   };
 
   return (
