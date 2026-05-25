@@ -276,7 +276,7 @@ export function InspectionDrawer({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'tween', duration: 0.36, ease: [0.32, 0.72, 0, 1] }}
-            className="fixed inset-x-0 bottom-0 z-50 flex flex-col h-[90dvh] bg-white rounded-t-3xl shadow-2xl overflow-hidden md:max-w-md mx-auto"
+            className="fixed inset-x-0 bottom-0 z-50 flex flex-col h-dvh bg-white rounded-t-3xl shadow-2xl overflow-hidden md:max-w-md mx-auto"
           >
             {/* Header */}
             <div className="p-4 border-b border-border flex items-center justify-between shrink-0 bg-white z-10">

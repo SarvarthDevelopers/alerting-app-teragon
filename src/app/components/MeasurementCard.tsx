@@ -511,7 +511,7 @@ export const MeasurementCard = memo(({
                               e.stopPropagation();
                               setIsDrawerOpen(true);
                             }}
-                            className="mt-3 w-full text-[12px] font-black text-foreground uppercase tracking-widest bg-foreground/5 py-3 rounded-xl border border-foreground/10 hover:bg-foreground/10 transition-colors flex items-center justify-center gap-2"
+                            className="mt-4 w-full py-4 rounded-xl font-bold text-lg bg-[#dedede] text-foreground hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-2"
                           >
                             + {remainingCount} MORE / INSPECT ALL
                           </button>
@@ -545,7 +545,7 @@ export const MeasurementCard = memo(({
                 ) : null;
               })()}
 
-              {hasActiveAlerts && (
+              {hasActiveAlerts && visibleAlerts.length <= 5 && (
                 <div className="mt-4">
                   <div
                     style={{ display: 'grid', gridTemplateRows: showConfirmation ? '1fr' : '0fr' }}
