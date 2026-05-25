@@ -480,7 +480,7 @@ export function InspectionDrawer({
                         e.stopPropagation();
                         showConfirmation ? handleAcknowledge() : setShowConfirmation(true);
                       }}
-                      className={`flex-[2] py-4 rounded-xl font-bold text-lg transition-all duration-300 ${
+                      className={`flex-1 py-4 rounded-xl font-bold text-lg transition-all duration-300 ${
                         isAcknowledging
                           ? 'bg-green-500 text-white cursor-default'
                           : 'bg-[#dedede] text-foreground hover:opacity-90'

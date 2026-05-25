@@ -640,6 +640,8 @@ export const MeasurementCard = memo(({
         displaySettings={displaySettings}
         showLargeUnit={showLargeUnit}
         setShowLargeUnit={setShowLargeUnit}
+        onAcknowledge={onAcknowledge}
+        sessionAckInfo={sessionAckInfo}
       />
     </div>
   );
