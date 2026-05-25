@@ -48,6 +48,8 @@ export function InspectionDrawer({
 
   // Dynamic ruler window state tracking what is currently visible in the list viewport
   const [visibleWindow, setVisibleWindow] = useState({ start: 0, end: 3000 });
+  const [scrubberPos, setScrubberPos] = useState<number | null>(null);
+  const rulerRef = useRef<HTMLDivElement>(null);
 
   const activeAlerts = useMemo(() => measurement.alerts.filter(a => a.currentState === 'NEW'), [measurement.alerts]);
   const hasActiveAlerts = activeAlerts.length > 0 && !sessionAckInfo;
@@ -107,6 +109,15 @@ export function InspectionDrawer({
     if (range <= 5000) return 500; // 50 cm spacing
     return 1000; // 1 meter spacing
   }, [visibleWindow]);
+
+  const handleInteraction = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!rulerRef.current) return;
+    const rect = rulerRef.current.getBoundingClientRect();
+    const clientX = 'touches' in e ? (e as React.TouchEvent).touches[0].clientX : (e as React.MouseEvent).clientX;
+    const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+    const percent = (x / rect.width) * 100;
+    setScrubberPos(percent);
+  };
 
   // Generate tick marks using absolute math
   const ticks = useMemo(() => {
@@ -219,7 +230,10 @@ export function InspectionDrawer({
     if (row) {
       const containerHeight = listElement.clientHeight;
       const rowHeight = row.clientHeight;
-      const targetScrollTop = row.offsetTop - (containerHeight / 2) + (rowHeight / 2);
+      
+      const rowRect = row.getBoundingClientRect();
+      const listRect = listElement.getBoundingClientRect();
+      const targetScrollTop = listElement.scrollTop + (rowRect.top - listRect.top) - (containerHeight / 2) + (rowHeight / 2);
       
       listElement.scrollTo({
         top: targetScrollTop,
@@ -273,64 +287,93 @@ export function InspectionDrawer({
               </button>
             </div>
 
-            {/* Ruler with Dynamic Zoom and Sliding Window */}
-            <div
-              className="shrink-0 bg-[#f6f6f6] border-b border-border/40 relative overflow-hidden"
-              style={{ height: 48 }}
-            >
-              {/* Anomaly coverage bars */}
-              {visibleBars.map(({ alert, index: i, leftPct, widthPct }) => {
-                const isSelected = i === activeIndex;
-                return (
-                  <div
-                    key={alert.id}
-                    className="absolute top-0 bottom-0 z-10"
-                    style={{
-                      left: `${leftPct}%`,
-                      width: `max(2px, ${widthPct}%)`,
-                      backgroundColor: getSeverityColor(alert.severity),
-                      opacity: isSelected ? 1 : 0.25,
-                      zIndex: isSelected ? 10 : 5,
-                      outline: isSelected ? '2px solid black' : 'none',
-                      outlineOffset: isSelected ? '-2px' : '0px',
-                      transition: 'left 150ms ease-out, width 150ms ease-out',
-                    }}
-                  />
-                );
-              })}
-
-              {/* Baseline */}
-              <div
-                className="absolute inset-x-0 pointer-events-none z-20"
-                style={{ top: '50%', height: 1, backgroundColor: 'rgba(0,0,0,0.12)' }}
-              />
-
-              {/* Tick marks & labels */}
-              {ticks.map((tick, i) => (
+            {/* Ruler with Dynamic Zoom, Sliding Window, and Interactive Scrubber */}
+            <div className="shrink-0 relative bg-[#f6f6f6] border-b border-border/40">
+              {/* Scrubber Tooltip */}
+              {scrubberPos !== null && (
                 <div
-                  key={i}
-                  className="absolute top-0 bottom-0 z-20 pointer-events-none"
-                  style={{ 
-                    left: `${tick.pct}%`, 
-                    width: 1, 
-                    backgroundColor: 'rgba(0,0,0,0.18)',
-                    transition: 'left 150ms ease-out'
-                  }}
+                  className="absolute bottom-[calc(100%+4px)] -translate-x-1/2 bg-black text-white px-2 py-1 rounded-md text-[10px] font-black z-40 pointer-events-none shadow-lg whitespace-nowrap"
+                  style={{ left: `${scrubberPos}%` }}
                 >
-                  <span
-                    className="absolute text-[8px] font-black tabular-nums"
-                    style={{
-                      bottom: 3,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      color: 'rgba(0,0,0,0.38)',
-                      whiteSpace: 'nowrap',
+                  {formatLength(visibleWindow.start + (scrubberPos / 100) * (visibleWindow.end - visibleWindow.start))}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-[4px] border-transparent border-t-black" />
+                </div>
+              )}
+
+              {/* Ruler Track */}
+              <div
+                ref={rulerRef}
+                className="relative w-full overflow-hidden cursor-crosshair touch-none select-none"
+                style={{ height: 48 }}
+                onMouseMove={handleInteraction}
+                onMouseDown={handleInteraction}
+                onTouchMove={handleInteraction}
+                onTouchStart={handleInteraction}
+                onMouseLeave={() => setScrubberPos(null)}
+                onTouchEnd={() => setScrubberPos(null)}
+              >
+                {/* Anomaly coverage bars */}
+                {visibleBars.map(({ alert, index: i, leftPct, widthPct }) => {
+                  const isSelected = i === activeIndex;
+                  return (
+                    <div
+                      key={alert.id}
+                      className="absolute top-0 bottom-0 z-10"
+                      style={{
+                        left: `${leftPct}%`,
+                        width: `max(2px, ${widthPct}%)`,
+                        backgroundColor: getSeverityColor(alert.severity),
+                        opacity: isSelected ? 1 : 0.25,
+                        zIndex: isSelected ? 10 : 5,
+                        outline: isSelected ? '2px solid black' : 'none',
+                        outlineOffset: isSelected ? '-2px' : '0px',
+                        transition: 'left 150ms ease-out, width 150ms ease-out',
+                      }}
+                    />
+                  );
+                })}
+
+                {/* Baseline */}
+                <div
+                  className="absolute inset-x-0 pointer-events-none z-20"
+                  style={{ top: '50%', height: 1, backgroundColor: 'rgba(0,0,0,0.12)' }}
+                />
+
+                {/* Tick marks & labels */}
+                {ticks.map((tick, i) => (
+                  <div
+                    key={i}
+                    className="absolute top-0 bottom-0 z-20 pointer-events-none"
+                    style={{ 
+                      left: `${tick.pct}%`, 
+                      width: 1, 
+                      backgroundColor: 'rgba(0,0,0,0.18)',
+                      transition: 'left 150ms ease-out'
                     }}
                   >
-                    {tick.label}
-                  </span>
-                </div>
-              ))}
+                    <span
+                      className="absolute text-[8px] font-black tabular-nums"
+                      style={{
+                        bottom: 3,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        color: 'rgba(0,0,0,0.38)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {tick.label}
+                    </span>
+                  </div>
+                ))}
+
+                {/* Vertical Scrubber Line */}
+                {scrubberPos !== null && (
+                  <div
+                    className="absolute top-0 bottom-0 w-[1.5px] bg-black z-30 pointer-events-none"
+                    style={{ left: `${scrubberPos}%` }}
+                  />
+                )}
+              </div>
             </div>
 
             {/* List Body with Crucial pb-[50vh] padding fix */}
@@ -348,7 +391,7 @@ export function InspectionDrawer({
                     onClick={() => handleItemClick(index)}
                     className={`anomaly-row px-4 py-3 rounded-2xl border transition-all duration-300 cursor-pointer ${
                       isActive
-                        ? 'bg-white border-black/20 shadow-lg shadow-black/5 scale-[1.015] z-10 relative'
+                        ? 'bg-white border-black shadow-lg shadow-black/5 scale-[1.015] z-10 relative'
                         : 'bg-black/[0.02] border-black/5 scale-100 text-foreground/80 hover:bg-black/[0.04]'
                     }`}
                     data-position={alert.startPos}
@@ -372,11 +415,21 @@ export function InspectionDrawer({
                       </span>
                     </div>
 
-                    {alert.technicalDetails && isActive && (
-                      <p className="text-xs mt-2 leading-relaxed text-black/60">
-                        {alert.technicalDetails}
-                      </p>
-                    )}
+                    <AnimatePresence initial={false}>
+                      {alert.technicalDetails && isActive && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                          animate={{ height: 'auto', opacity: 1, marginTop: 8 }}
+                          exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                          transition={{ duration: 0.22, ease: 'easeInOut' }}
+                          className="overflow-hidden"
+                        >
+                          <p className="text-xs leading-relaxed text-black/60">
+                            {alert.technicalDetails}
+                          </p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 );
               })}
