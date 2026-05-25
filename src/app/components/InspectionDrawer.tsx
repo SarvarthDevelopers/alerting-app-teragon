@@ -11,6 +11,8 @@ interface InspectionDrawerProps {
   displaySettings: DisplaySettings;
   onAcknowledge?: (id: string) => void;
   sessionAckInfo?: { acknowledgedBy: string; acknowledgedAt: string };
+  showLargeUnit: boolean;
+  setShowLargeUnit: (val: boolean) => void;
 }
 
 export function InspectionDrawer({
@@ -20,7 +22,9 @@ export function InspectionDrawer({
   anomalyConfigs,
   displaySettings,
   onAcknowledge,
-  sessionAckInfo
+  sessionAckInfo,
+  showLargeUnit,
+  setShowLargeUnit
 }: InspectionDrawerProps) {
   const [listElement, setListElement] = useState<HTMLDivElement | null>(null);
   const listRef = useCallback((node: HTMLDivElement | null) => {
@@ -57,12 +61,20 @@ export function InspectionDrawer({
   const formatLength = useCallback((mm: number): string => {
     const isMetric = displaySettings.unitSystem === 'METRIC';
     if (isMetric) {
-      return `${(mm / 1000).toFixed(2)}m`;
+      if (showLargeUnit) {
+        return `${(mm / 1000).toFixed(2)} m`;
+      } else {
+        return `${Number(mm.toFixed(2)).toLocaleString()} mm`;
+      }
     } else {
       const inches = mm / 25.4;
-      return `${(inches / 12).toFixed(2)}ft`;
+      if (showLargeUnit) {
+        return `${(inches / 12).toFixed(2)} ft`;
+      } else {
+        return `${Number(inches.toFixed(2)).toLocaleString()} in`;
+      }
     }
-  }, [displaySettings.unitSystem]);
+  }, [displaySettings.unitSystem, showLargeUnit]);
 
   const getSeverityColor = (severity: string): string => {
     return `var(--severity-${severity.toLowerCase()})`;
@@ -274,7 +286,10 @@ export function InspectionDrawer({
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted px-2 py-0.5 rounded-full">
                     {sortedAlerts.length} Anomalies
                   </span>
-                  <span className="text-[10px] font-bold text-foreground/50">
+                  <span 
+                    onClick={() => setShowLargeUnit(!showLargeUnit)}
+                    className="text-[10px] font-bold text-foreground/50 hover:text-black cursor-pointer select-none transition-colors"
+                  >
                     Window: {formatLength(visibleWindow.start)} - {formatLength(visibleWindow.end)}
                   </span>
                 </div>

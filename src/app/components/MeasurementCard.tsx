@@ -184,18 +184,18 @@ export const MeasurementCard = memo(({
 
     if (unitSystem === 'METRIC') {
       if (showLargeUnit) {
-        return `${(lengthMm / 1000).toFixed(1)} m`;
+        return `${(lengthMm / 1000).toFixed(2)} m`;
       } else {
-        return `${lengthMm.toLocaleString()} mm`;
+        return `${Number(lengthMm.toFixed(2)).toLocaleString()} mm`;
       }
     } else {
       // Imperial: convert mm to inches
       const inches = lengthMm / 25.4;
       if (showLargeUnit) {
         const feet = inches / 12;
-        return `${feet.toFixed(1)} ft`;
+        return `${feet.toFixed(2)} ft`;
       } else {
-        return `${inches.toFixed(1)} in`;
+        return `${Number(inches.toFixed(2)).toLocaleString()} in`;
       }
     }
   };
@@ -638,6 +638,8 @@ export const MeasurementCard = memo(({
         measurement={measurement}
         anomalyConfigs={anomalyConfigs}
         displaySettings={displaySettings}
+        showLargeUnit={showLargeUnit}
+        setShowLargeUnit={setShowLargeUnit}
       />
     </div>
   );
