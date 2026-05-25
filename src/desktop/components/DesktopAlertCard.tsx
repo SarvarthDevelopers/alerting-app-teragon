@@ -442,6 +442,7 @@ export const DesktopAlertCard = memo(({
                         style={{
                           left: `${startPercent}%`,
                           width: `${widthPercent}%`,
+                          minWidth: '4px',
                           zIndex: isGroupSelected ? 35 : 20,
                         }}
                       >

@@ -391,6 +391,7 @@ export const MeasurementCard = memo(({
                         style={{
                           left: `${startPercent}%`,
                           width: `${widthPercent}%`,
+                          minWidth: '4px',
                           zIndex: isGroupSelected ? 15 : 10
                         }}
                       >
@@ -622,6 +623,7 @@ export const MeasurementCard = memo(({
                     style={{
                       left: `${startPercent}%`,
                       width: `${widthPercent}%`,
+                      minWidth: '4px',
                       backgroundColor: getSeverityColor(group.highestSeverity)
                     }}
                   />

@@ -336,7 +336,7 @@ export function InspectionDrawer({
                       className="absolute top-0 bottom-0 z-10"
                       style={{
                         left: `${leftPct}%`,
-                        width: `max(2px, ${widthPct}%)`,
+                        width: `max(4px, ${widthPct}%)`,
                         backgroundColor: getSeverityColor(alert.severity),
                         opacity: isSelected ? 1 : 0.25,
                         zIndex: isSelected ? 10 : 5,

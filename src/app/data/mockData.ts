@@ -138,6 +138,19 @@ export const mockMeasurements: Measurement[] = [
         priority: 3,
         createdAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
         updatedAt: new Date(Date.now() - 2 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'a1_hairline_1',
+        measurementId: 'm1',
+        anomalyType: 'VISUAL_DEFECT',
+        startPos: 6200,
+        length: 2,
+        severity: 'CRITICAL',
+        currentState: 'NEW',
+        priority: 1,
+        createdAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
+        updatedAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
+        technicalDetails: 'Hairline crack detected. Visual width: 0.15mm. Structural depth: 0.05mm. Extremely fine superficial defect.'
       }
     ]
   },
@@ -161,6 +174,19 @@ export const mockMeasurements: Measurement[] = [
         createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
         updatedAt: new Date(Date.now() - 1 * 60 * 1000).toISOString(),
         technicalDetails: 'Edge crack pattern identified. Correlation found with roll vibration sensor RSV-04. Potential bearing fatigue in Finishing Stand 2.'
+      },
+      {
+        id: 'a2_hairline_1',
+        measurementId: 'm2',
+        anomalyType: 'SURFACE_ROUGHNESS',
+        startPos: 1200,
+        length: 5,
+        severity: 'MEDIUM',
+        currentState: 'NEW',
+        priority: 3,
+        createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+        updatedAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+        technicalDetails: 'Localized micro-abrasion patch. Length: 5mm. Roughness index Ra: 3.2μm.'
       }
     ]
   },
@@ -185,6 +211,19 @@ export const mockMeasurements: Measurement[] = [
         updatedAt: new Date(Date.now() - 7 * 60 * 1000).toISOString(),
         acknowledgedBy: 'Operator Smith',
         acknowledgedAt: new Date(Date.now() - 7 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'a3_hairline_1',
+        measurementId: 'm3',
+        anomalyType: 'DIMENSIONAL_VARIANCE',
+        startPos: 8500,
+        length: 8,
+        severity: 'HIGH',
+        currentState: 'NEW',
+        priority: 2,
+        createdAt: new Date(Date.now() - 8 * 60 * 1000).toISOString(),
+        updatedAt: new Date(Date.now() - 8 * 60 * 1000).toISOString(),
+        technicalDetails: 'Point deviation on flange height. Variance: +0.45mm. Extremely localized variance.'
       }
     ]
   },
@@ -243,6 +282,19 @@ export const mockMeasurements: Measurement[] = [
         updatedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
         acknowledgedBy: 'Operator Jones',
         acknowledgedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'a5_hairline_1',
+        measurementId: 'm5',
+        anomalyType: 'FLATNESS_DEVIATION',
+        startPos: 9200,
+        length: 3,
+        severity: 'LOW',
+        currentState: 'NEW',
+        priority: 4,
+        createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+        updatedAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+        technicalDetails: 'Localized micro-ripple. Amplitude: 0.12mm. Near edge boundary.'
       }
     ]
   },
@@ -276,6 +328,19 @@ export const mockMeasurements: Measurement[] = [
         updatedAt: new Date(Date.now() - 22 * 60 * 1000).toISOString(),
         acknowledgedBy: 'Operator Davis',
         acknowledgedAt: new Date(Date.now() - 22 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'a7_hairline_1',
+        measurementId: 'm7',
+        anomalyType: 'PROFILE_OFFSET',
+        startPos: 11500,
+        length: 1,
+        severity: 'CRITICAL',
+        currentState: 'NEW',
+        priority: 1,
+        createdAt: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
+        updatedAt: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
+        technicalDetails: 'Extreme point offset detected. Sudden profile deviation. Duration: <0.1s.'
       }
     ]
   },
