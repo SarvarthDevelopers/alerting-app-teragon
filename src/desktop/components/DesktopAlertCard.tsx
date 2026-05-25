@@ -5,6 +5,7 @@ import { SeverityBadge } from '../../app/components/AlertBadge';
 import { getRelativeTime, formatExpandedTime, getSeverityColor } from '../utils/formatters';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, History, X, Check, Info, FileText, ArrowLeft } from 'lucide-react';
+import { DesktopInspectionSheet } from './DesktopInspectionSheet';
 
 interface DesktopAlertCardProps {
   measurement: Measurement;
@@ -55,6 +56,8 @@ export const DesktopAlertCard = memo(({
   const [isResolving, setIsResolving] = useState(false);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [showAcknowledgeForm, setShowAcknowledgeForm] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [sheetActiveAlertId, setSheetActiveAlertId] = useState<string | null>(null);
   const rulerRef = useRef<HTMLDivElement>(null);
 
   const springTransition = {
@@ -87,9 +90,6 @@ export const DesktopAlertCard = memo(({
 
   const hasAlerts = measurement.alerts.length > 0;
   
-  const [currentPage, setCurrentPage] = useState(0);
-  const PAGE_SIZE = 10;
-  
   // Filter alerts based on active anomaly types
   const visibleAlerts = useMemo(() => {
     return measurement.alerts.filter(alert => {
@@ -98,28 +98,27 @@ export const DesktopAlertCard = memo(({
     });
   }, [measurement.alerts, anomalyConfigs]);
 
-  const totalPages = Math.ceil(visibleAlerts.length / PAGE_SIZE);
+  const hasManyAlerts = visibleAlerts.length > 5;
+  const [currentPage, setCurrentPage] = useState(0);
+  const PAGE_SIZE = 10;
+
+  const totalPages = useMemo(() => {
+    if (hasManyAlerts) return 0;
+    return Math.ceil(visibleAlerts.length / PAGE_SIZE);
+  }, [visibleAlerts, hasManyAlerts]);
 
   const paginatedAlerts = useMemo(() => {
+    if (hasManyAlerts) {
+      return [...visibleAlerts].sort((a, b) => a.startPos - b.startPos);
+    }
     const sorted = [...visibleAlerts].sort((a, b) => a.startPos - b.startPos);
     const startIdx = currentPage * PAGE_SIZE;
     return sorted.slice(startIdx, startIdx + PAGE_SIZE);
-  }, [visibleAlerts, currentPage]);
+  }, [visibleAlerts, currentPage, hasManyAlerts]);
 
   const rulerBounds = useMemo(() => {
-    if (paginatedAlerts.length === 0) {
-      return { start: 0, end: measurement.productLength };
-    }
-    const firstAlert = paginatedAlerts[0];
-    const lastAlert = paginatedAlerts[paginatedAlerts.length - 1];
-    
-    // 5% padding
-    const padding = measurement.productLength * 0.05;
-    const start = Math.max(0, firstAlert.startPos - padding);
-    const end = Math.min(measurement.productLength, lastAlert.startPos + lastAlert.length + padding);
-    
-    return { start, end };
-  }, [paginatedAlerts, measurement.productLength]);
+    return { start: 0, end: measurement.productLength };
+  }, [measurement.productLength]);
 
   interface AlertGroup {
     id: string;
@@ -320,23 +319,23 @@ export const DesktopAlertCard = memo(({
         </AnimatePresence>
 
         {/* Left: Identity */}
-        <div className={`w-64 p-8 border-r border-border/40 flex flex-col justify-center bg-muted/5 group-hover:bg-muted/10 transition-colors ${!hasAlerts ? 'py-6' : ''}`}>
+        <div className={`w-64 min-w-0 p-8 border-r border-border/40 flex flex-col justify-center bg-muted/5 group-hover:bg-muted/10 transition-colors ${!hasAlerts ? 'py-6' : ''}`}>
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-[0.2em]">
+            <span className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-[0.2em] truncate">
               {getSystemDisplayName(measurement.system)}
             </span>
           </div>
-          <h3 className={`text-2xl tracking-tighter transition-all duration-500 ${
+          <h3 className={`text-2xl tracking-tighter transition-all duration-500 truncate w-full ${
             !hasAlerts 
               ? 'text-xl font-medium text-foreground/40' 
               : 'font-black text-foreground'
-          }`}>
+          }`} title={measurement.serialNumber}>
             {measurement.serialNumber}
           </h3>
-          <div className="text-[10px] text-muted-foreground font-bold mt-2 flex items-center gap-2 bg-black/5 self-start px-2 py-1 rounded-lg">
-            <span>{measurement.productType}</span>
-            <span className="opacity-30">•</span>
-            <span className="opacity-80 font-sans">{formatLength(measurement.productLength)}</span>
+          <div className="text-[10px] text-muted-foreground font-bold mt-2 flex items-center gap-2 bg-black/5 self-start px-2 py-1 rounded-lg max-w-full">
+            <span className="truncate">{measurement.productType}</span>
+            <span className="opacity-30 shrink-0">•</span>
+            <span className="opacity-80 font-sans shrink-0">{formatLength(measurement.productLength)}</span>
           </div>
         </div>
 
@@ -408,6 +407,12 @@ export const DesktopAlertCard = memo(({
                     const handleGroupClick = (e: React.MouseEvent) => {
                       e.stopPropagation();
 
+                      if (hasManyAlerts) {
+                        setSheetActiveAlertId(group.alerts[0].id);
+                        setIsSheetOpen(true);
+                        return;
+                      }
+
                       let nextAlert: Alert | null = null;
                       if (group.alerts.length === 1) {
                         const alert = group.alerts[0];
@@ -459,9 +464,7 @@ export const DesktopAlertCard = memo(({
                         )}
 
                         <motion.div
-                          initial={{ scaleX: 0 }}
                           animate={{ 
-                            scaleX: 1,
                             opacity: selectedAlertId && !isGroupSelected ? 0.25 : 1,
                             backgroundColor: getSeverityColor(group.highestSeverity),
                             scaleY: isGroupSelected ? 1.3 : 1,
@@ -471,9 +474,6 @@ export const DesktopAlertCard = memo(({
                           className={`w-full h-full rounded-none cursor-pointer ${
                             isGroupSelected ? 'ring-2 ring-black ring-inset shadow-lg' : 'hover:opacity-90'
                           }`}
-                          style={{
-                            originX: 0
-                          }}
                         />
                       </div>
                     );
@@ -506,7 +506,7 @@ export const DesktopAlertCard = memo(({
               </div>
 
               <div className="flex flex-wrap items-center gap-2 mt-1">
-                {paginatedAlerts.map((alert) => {
+                {(hasManyAlerts ? visibleAlerts.slice(0, 5) : paginatedAlerts).map((alert) => {
                   const config = anomalyConfigs.find(c => c.type === alert.anomalyType);
                   const endPos = Math.min(alert.startPos + alert.length, measurement.productLength);
                   const isSelectedForDetail = selectedAlertId === alert.id;
@@ -517,38 +517,56 @@ export const DesktopAlertCard = memo(({
                       key={alert.id} 
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedAlertId(alert.id);
-                        if (hasDetails) {
-                          setIsExpanded(true);
+                        if (hasManyAlerts) {
+                          setSheetActiveAlertId(alert.id);
+                          setIsSheetOpen(true);
                         } else {
-                          setIsExpanded(false);
+                          setSelectedAlertId(alert.id);
+                          if (hasDetails) {
+                            setIsExpanded(true);
+                          } else {
+                            setIsExpanded(false);
+                          }
+                          setShowAcknowledgeForm(false);
                         }
-                        setShowAcknowledgeForm(false);
                       }}
                       className={`flex items-center gap-2 px-3 py-2 rounded-2xl border backdrop-blur-sm transition-all cursor-pointer ${
-                        isSelectedForDetail 
+                        isSelectedForDetail && !hasManyAlerts
                           ? 'bg-[#0a0a0a] border-black text-white' 
                           : 'bg-black/5 border-black/10 text-foreground/80 hover:border-black/30'
                       }`}
                     >
                       <div 
-                        className={`w-2 h-2 rounded-full shadow-sm transition-transform duration-300 ${isSelectedForDetail ? 'scale-125' : ''}`} 
+                        className={`w-2 h-2 rounded-full shadow-sm transition-transform duration-300 ${isSelectedForDetail && !hasManyAlerts ? 'scale-125' : ''}`} 
                         style={{ backgroundColor: getSeverityColor(alert.severity) }} 
                       />
-                      <span className={`text-[10px] font-black tracking-tight ${isSelectedForDetail ? 'text-white' : 'text-foreground/80'}`}>
+                      <span className={`text-[10px] font-black tracking-tight ${isSelectedForDetail && !hasManyAlerts ? 'text-white' : 'text-foreground/80'}`}>
                         {config?.displayName || alert.anomalyType}
                       </span>
-                      <span className={`text-[10px] font-bold tabular-nums ${isSelectedForDetail ? 'text-white/60' : 'text-muted-foreground'}`}>
+                      <span className={`text-[10px] font-bold tabular-nums ${isSelectedForDetail && !hasManyAlerts ? 'text-white/60' : 'text-muted-foreground'}`}>
                         {formatLength(alert.startPos)} - {formatLength(endPos)}
                       </span>
                       {hasDetails && (
-                        <div className={`ml-1 w-4.5 h-4.5 rounded-full flex items-center justify-center transition-colors ${isSelectedForDetail ? 'bg-white/20' : 'bg-black/5'}`}>
-                          <Info size={11} className={`${isSelectedForDetail ? 'text-white' : 'text-muted-foreground'}`} />
+                        <div className={`ml-1 w-4.5 h-4.5 rounded-full flex items-center justify-center transition-colors ${isSelectedForDetail && !hasManyAlerts ? 'bg-white/20' : 'bg-black/5'}`}>
+                          <Info size={11} className={`${isSelectedForDetail && !hasManyAlerts ? 'text-white' : 'text-muted-foreground'}`} />
                         </div>
                       )}
                     </motion.div>
                   );
                 })}
+
+                {hasManyAlerts && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSheetActiveAlertId(null);
+                      setIsSheetOpen(true);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-2xl border border-black/10 bg-[#dedede] text-foreground font-black text-[10px] hover:bg-black/5 transition-all cursor-pointer font-sans"
+                  >
+                    + {visibleAlerts.length - 5} MORE / INSPECT ALL
+                  </button>
+                )}
               </div>
 
               {totalPages > 1 && (
@@ -816,6 +834,18 @@ export const DesktopAlertCard = memo(({
           </motion.div>
         )}
       </AnimatePresence>
+      <DesktopInspectionSheet
+        isOpen={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
+        measurement={measurement}
+        anomalyConfigs={anomalyConfigs}
+        displaySettings={displaySettings}
+        onAcknowledge={onAcknowledge}
+        isSessionAck={isSessionAck}
+        showLargeUnit={showLargeUnit}
+        setShowLargeUnit={setShowLargeUnit}
+        initialActiveAlertId={sheetActiveAlertId}
+      />
     </motion.div>
   );
 });

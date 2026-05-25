@@ -38,6 +38,12 @@ const formatExpandedTime = (timestamp: string): string => {
   }
 };
 
+const getDynamicFontSize = (length: number): string => {
+  if (length <= 10) return '1.5rem';      // 24px (text-2xl)
+  if (length <= 16) return '1.25rem';     // 20px (text-xl)
+  return '1.125rem';                      // 18px (text-lg) - minimum size before truncation
+};
+
 interface MeasurementCardProps {
   measurement: Measurement;
   forceCollapsed?: boolean;
@@ -269,11 +275,15 @@ export const MeasurementCard = memo(({
           className="flex items-start justify-between cursor-pointer"
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          <div className="flex-1">
-            <div className="text-sm text-muted-foreground mb-1">
+          <div className="flex-1 min-w-0">
+            <div className="text-sm text-muted-foreground mb-1 truncate">
               {getSystemDisplayName(measurement.system)}
             </div>
-            <h3 className="text-2xl font-bold text-foreground">
+            <h3 
+              className="font-bold text-foreground truncate" 
+              style={{ fontSize: getDynamicFontSize(measurement.serialNumber.length) }}
+              title={measurement.serialNumber}
+            >
               {measurement.serialNumber}
             </h3>
           </div>

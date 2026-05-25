@@ -61,7 +61,7 @@ export const anomalyConfigs: AnomalyConfig[] = [
 export const mockMeasurements: Measurement[] = [
   {
     id: 'm23',
-    serialNumber: 'SN-98674',
+    serialNumber: 'SN-98674-SN-98674-SN-98674',
     system: 'SURFACE_INSPECTION',
     timestamp: new Date(Date.now() - 1 * 60 * 1000).toISOString(),
     productLength: 20000,
@@ -82,7 +82,7 @@ export const mockMeasurements: Measurement[] = [
   },
   {
     id: 'm1',
-    serialNumber: 'SN-98652',
+    serialNumber: 'SN-98652-SN-98652-SN-98652',
     system: 'SURFACE_INSPECTION',
     timestamp: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
     productLength: 12000,
@@ -156,7 +156,7 @@ export const mockMeasurements: Measurement[] = [
   },
   {
     id: 'm2',
-    serialNumber: 'SN-98653',
+    serialNumber: 'SN-98653-SN-98653-SN-98653',
     system: 'SURFACE_INSPECTION',
     timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
     productLength: 10500,
@@ -192,7 +192,7 @@ export const mockMeasurements: Measurement[] = [
   },
   {
     id: 'm3',
-    serialNumber: 'SN-98654',
+    serialNumber: 'SN-98654-SN-98654-SN-98654',
     system: 'PROFILE_MEASUREMENT',
     timestamp: new Date(Date.now() - 8 * 60 * 1000).toISOString(),
     productLength: 15000,
@@ -229,7 +229,7 @@ export const mockMeasurements: Measurement[] = [
   },
   {
     id: 'm4',
-    serialNumber: 'SN-98655',
+    serialNumber: 'SN-98655-SN-98655-SN-98655',
     system: 'PROFILE_MEASUREMENT',
     timestamp: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
     productLength: 8900,
@@ -238,7 +238,7 @@ export const mockMeasurements: Measurement[] = [
   },
   {
     id: 'm5',
-    serialNumber: 'SN-98656',
+    serialNumber: 'SN-98656-SN-98656-SN-98656',
     system: 'FLATNESS_MEASUREMENT',
     timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
     productLength: 11200,
@@ -300,7 +300,7 @@ export const mockMeasurements: Measurement[] = [
   },
   {
     id: 'm6',
-    serialNumber: 'SN-98657',
+    serialNumber: 'SN-98657-SN-98657-SN-98657',
     system: 'FLATNESS_MEASUREMENT',
     timestamp: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
     productLength: 9800,
@@ -309,7 +309,7 @@ export const mockMeasurements: Measurement[] = [
   },
   {
     id: 'm7',
-    serialNumber: 'SN-98658',
+    serialNumber: 'SN-98658-SN-98658-SN-98658',
     system: 'SURFACE_INSPECTION',
     timestamp: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
     productLength: 13400,
@@ -347,7 +347,7 @@ export const mockMeasurements: Measurement[] = [
   // OK measurements - Surface Inspection
   {
     id: 'm8',
-    serialNumber: 'SN-98659',
+    serialNumber: 'SN-98659-SN-98659-SN-98659',
     system: 'SURFACE_INSPECTION',
     timestamp: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
     productLength: 11800,
@@ -356,7 +356,7 @@ export const mockMeasurements: Measurement[] = [
   },
   {
     id: 'm9',
-    serialNumber: 'SN-98660',
+    serialNumber: 'SN-98660-SN-98660-SN-98660',
     system: 'SURFACE_INSPECTION',
     timestamp: new Date(Date.now() - 18 * 60 * 1000).toISOString(),
     productLength: 9500,
@@ -365,7 +365,7 @@ export const mockMeasurements: Measurement[] = [
   },
   {
     id: 'm10',
-    serialNumber: 'SN-98661',
+    serialNumber: 'SN-98661-SN-98661-SN-98661',
     system: 'SURFACE_INSPECTION',
     timestamp: new Date(Date.now() - 28 * 60 * 1000).toISOString(),
     productLength: 12300,
@@ -374,7 +374,7 @@ export const mockMeasurements: Measurement[] = [
   },
   {
     id: 'm11',
-    serialNumber: 'SN-98662',
+    serialNumber: 'SN-98662-SN-98662-SN-98662',
     system: 'SURFACE_INSPECTION',
     timestamp: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
     productLength: 10100,
@@ -383,7 +383,7 @@ export const mockMeasurements: Measurement[] = [
   },
   {
     id: 'm12',
-    serialNumber: 'SN-98663',
+    serialNumber: 'SN-98663-SN-98663-SN-98663',
     system: 'SURFACE_INSPECTION',
     timestamp: new Date(Date.now() - 42 * 60 * 1000).toISOString(),
     productLength: 13700,
@@ -393,7 +393,7 @@ export const mockMeasurements: Measurement[] = [
   // OK measurements - Profile Measurement
   {
     id: 'm13',
-    serialNumber: 'SN-98664',
+    serialNumber: 'SN-98664-SN-98664-SN-98664',
     system: 'PROFILE_MEASUREMENT',
     timestamp: new Date(Date.now() - 6 * 60 * 1000).toISOString(),
     productLength: 14200,
@@ -402,7 +402,7 @@ export const mockMeasurements: Measurement[] = [
   },
   {
     id: 'm14',
-    serialNumber: 'SN-98665',
+    serialNumber: 'SN-98665-SN-98665-SN-98665',
     system: 'PROFILE_MEASUREMENT',
     timestamp: new Date(Date.now() - 14 * 60 * 1000).toISOString(),
     productLength: 9100,
@@ -411,7 +411,7 @@ export const mockMeasurements: Measurement[] = [
   },
   {
     id: 'm15',
-    serialNumber: 'SN-98666',
+    serialNumber: 'SN-98666-SN-98666-SN-98666',
     system: 'PROFILE_MEASUREMENT',
     timestamp: new Date(Date.now() - 22 * 60 * 1000).toISOString(),
     productLength: 11900,
@@ -420,7 +420,7 @@ export const mockMeasurements: Measurement[] = [
   },
   {
     id: 'm16',
-    serialNumber: 'SN-98667',
+    serialNumber: 'SN-98667-SN-98667-SN-98667',
     system: 'PROFILE_MEASUREMENT',
     timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
     productLength: 8600,
@@ -429,7 +429,7 @@ export const mockMeasurements: Measurement[] = [
   },
   {
     id: 'm17',
-    serialNumber: 'SN-98668',
+    serialNumber: 'SN-98668-SN-98668-SN-98668',
     system: 'PROFILE_MEASUREMENT',
     timestamp: new Date(Date.now() - 38 * 60 * 1000).toISOString(),
     productLength: 13100,
@@ -439,7 +439,7 @@ export const mockMeasurements: Measurement[] = [
   // OK measurements - Flatness Measurement
   {
     id: 'm18',
-    serialNumber: 'SN-98669',
+    serialNumber: 'SN-98669-SN-98669-SN-98669',
     system: 'FLATNESS_MEASUREMENT',
     timestamp: new Date(Date.now() - 4 * 60 * 1000).toISOString(),
     productLength: 10700,
@@ -448,7 +448,7 @@ export const mockMeasurements: Measurement[] = [
   },
   {
     id: 'm19',
-    serialNumber: 'SN-98670',
+    serialNumber: 'SN-98670-SN-98670-SN-98670',
     system: 'FLATNESS_MEASUREMENT',
     timestamp: new Date(Date.now() - 11 * 60 * 1000).toISOString(),
     productLength: 12500,
@@ -457,7 +457,7 @@ export const mockMeasurements: Measurement[] = [
   },
   {
     id: 'm20',
-    serialNumber: 'SN-98671',
+    serialNumber: 'SN-98671-SN-98671-SN-98671',
     system: 'FLATNESS_MEASUREMENT',
     timestamp: new Date(Date.now() - 17 * 60 * 1000).toISOString(),
     productLength: 9300,
@@ -466,7 +466,7 @@ export const mockMeasurements: Measurement[] = [
   },
   {
     id: 'm21',
-    serialNumber: 'SN-98672',
+    serialNumber: 'SN-98672-SN-98672-SN-98672',
     system: 'FLATNESS_MEASUREMENT',
     timestamp: new Date(Date.now() - 26 * 60 * 1000).toISOString(),
     productLength: 11600,
@@ -475,7 +475,7 @@ export const mockMeasurements: Measurement[] = [
   },
   {
     id: 'm22',
-    serialNumber: 'SN-98673',
+    serialNumber: 'SN-98673-SN-98673-SN-98673',
     system: 'FLATNESS_MEASUREMENT',
     timestamp: new Date(Date.now() - 33 * 60 * 1000).toISOString(),
     productLength: 10400,
@@ -484,7 +484,7 @@ export const mockMeasurements: Measurement[] = [
   },
   {
     id: 'm24',
-    serialNumber: 'SN-98675',
+    serialNumber: 'SN-98675-SN-98675-SN-98675',
     system: 'SURFACE_INSPECTION',
     timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
     productLength: 20000,

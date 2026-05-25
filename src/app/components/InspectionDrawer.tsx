@@ -3,6 +3,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
 import { Measurement, AnomalyConfig, DisplaySettings } from '../types';
 
+
+const getDrawerDynamicFontSize = (length: number): string => {
+  if (length <= 10) return '1.25rem';     // 20px (text-xl)
+  return '1.125rem';                      // 18px (text-lg) - minimum size before truncation
+};
+
 interface InspectionDrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -279,16 +285,22 @@ export function InspectionDrawer({
             className="fixed inset-x-0 bottom-0 z-50 flex flex-col h-dvh bg-white rounded-t-3xl shadow-2xl overflow-hidden md:max-w-md mx-auto"
           >
             {/* Header */}
-            <div className="p-4 border-b border-border flex items-center justify-between shrink-0 bg-white z-10">
-              <div>
-                <h2 className="text-xl font-black text-foreground tracking-tight">{measurement.serialNumber}</h2>
+            <div className="p-4 border-b border-border flex items-center justify-between shrink-0 bg-white z-10 gap-4">
+              <div className="min-w-0 flex-1">
+                <h2 
+                  className="font-black text-foreground tracking-tight truncate" 
+                  style={{ fontSize: getDrawerDynamicFontSize(measurement.serialNumber.length) }}
+                  title={measurement.serialNumber}
+                >
+                  {measurement.serialNumber}
+                </h2>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted px-2 py-0.5 rounded-full shrink-0">
                     {sortedAlerts.length} Anomalies
                   </span>
                   <span 
                     onClick={() => setShowLargeUnit(!showLargeUnit)}
-                    className="text-[10px] font-bold text-foreground/50 hover:text-black cursor-pointer select-none transition-colors"
+                    className="text-[10px] font-bold text-foreground/50 hover:text-black cursor-pointer select-none transition-colors truncate"
                   >
                     Window: {formatLength(visibleWindow.start)} - {formatLength(visibleWindow.end)}
                   </span>
