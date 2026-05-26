@@ -180,6 +180,7 @@ export const DesktopAlertCard = memo(({
   const activeAlerts = useMemo(() => visibleAlerts.filter(a => a.currentState === 'NEW'), [visibleAlerts]);
   const isAcknowledged = useMemo(() => isSessionAck || visibleAlerts.every(a => a.currentState === 'ACKNOWLEDGED'), [isSessionAck, visibleAlerts]);
 
+
   const timestamp = useMemo(() => new Date(measurement.timestamp), [measurement.timestamp]);
   const isOlderThan24h = useMemo(() => (new Date().getTime() - timestamp.getTime()) > 86400000, [timestamp]);
 
@@ -319,24 +320,20 @@ export const DesktopAlertCard = memo(({
         </AnimatePresence>
 
         {/* Left: Identity */}
-        <div className={`w-64 min-w-0 p-8 border-r border-border/40 flex flex-col justify-center bg-muted/5 group-hover:bg-muted/10 transition-colors ${!hasAlerts ? 'py-6' : ''}`}>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-[0.2em] truncate">
-              {getSystemDisplayName(measurement.system)}
+        <div className={`w-52 min-w-0 p-6 border-r border-border/40 flex flex-col justify-center bg-muted/5 group-hover:bg-muted/10 transition-colors ${!hasAlerts ? 'py-4' : ''}`}>
+          <span className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-[0.2em] truncate mb-1.5">
+            {getSystemDisplayName(measurement.system)}
+          </span>
+          <span className="text-sm font-bold text-foreground truncate max-w-full mb-2">
+            {measurement.productType}
+          </span>
+          {hasAlerts ? (
+            <span className="inline-flex items-center self-start px-2.5 py-1 rounded-md bg-black/5 border border-black/8 text-[10px] font-black text-foreground/70 uppercase tracking-widest tabular-nums">
+              {visibleAlerts.length} Anomalies
             </span>
-          </div>
-          <h3 className={`text-2xl tracking-tighter transition-all duration-500 truncate w-full ${
-            !hasAlerts 
-              ? 'text-xl font-medium text-foreground/40' 
-              : 'font-black text-foreground'
-          }`} title={measurement.serialNumber}>
-            {measurement.serialNumber}
-          </h3>
-          <div className="text-[10px] text-muted-foreground font-bold mt-2 flex items-center gap-2 bg-black/5 self-start px-2 py-1 rounded-lg max-w-full">
-            <span className="truncate">{measurement.productType}</span>
-            <span className="opacity-30 shrink-0">•</span>
-            <span className="opacity-80 font-sans shrink-0">{formatLength(measurement.productLength)}</span>
-          </div>
+          ) : (
+            <span className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-widest">No Anomalies</span>
+          )}
         </div>
 
         {/* Middle: Visualization (Ruler) */}
@@ -356,25 +353,30 @@ export const DesktopAlertCard = memo(({
                 }}
                 className="text-[10px] font-bold text-foreground/80 hover:text-black transition-colors tabular-nums underline decoration-dotted underline-offset-4"
               >
-                LENGTH: {formatLength(measurement.productLength)}
+                TOTAL: {formatLength(measurement.productLength)}
               </button>
             </div>
           ) : (
             <>
               <div className="flex items-center justify-between w-full">
-                {totalPages > 1 ? (
-                  <span className="text-[10px] font-black text-foreground/50 uppercase tracking-widest">
-                    Viewport: {formatLength(rulerBounds.start)} - {formatLength(rulerBounds.end)}
-                  </span>
-                ) : <span />}
-                <button 
+                <h3
+                  className={`tracking-tighter truncate max-w-[60%] ${
+                    !hasAlerts
+                      ? 'text-sm font-medium text-foreground/40'
+                      : 'text-base font-black text-foreground'
+                  }`}
+                  title={measurement.serialNumber}
+                >
+                  {measurement.serialNumber}
+                </h3>
+                <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowLargeUnit(!showLargeUnit);
                   }}
-                  className="text-[10px] font-bold text-foreground/80 hover:text-black transition-colors tabular-nums underline decoration-dotted underline-offset-4"
+                  className="text-[10px] font-bold text-foreground/80 hover:text-black transition-colors tabular-nums underline decoration-dotted underline-offset-4 shrink-0 ml-4"
                 >
-                  LENGTH: {formatLength(measurement.productLength)}
+                  TOTAL: {formatLength(measurement.productLength)}
                 </button>
               </div>
 
@@ -699,7 +701,7 @@ export const DesktopAlertCard = memo(({
                         <div className="border-r border-border/40 shrink-0 w-[48px]" />
                       )}
 
-                      <div className="w-64 px-8 border-r border-border/40 h-full flex flex-col justify-center">
+                      <div className="w-52 px-6 border-r border-border/40 h-full flex flex-col justify-center">
                         <span className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-1.5">
                           {anomalyConfigs.find(c => c.type === selectedAlert.anomalyType)?.displayName || selectedAlert.anomalyType}
                         </span>
