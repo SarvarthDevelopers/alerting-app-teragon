@@ -41,7 +41,7 @@ const formatExpandedTime = (timestamp: string): string => {
 const getDynamicFontSize = (length: number): string => {
   if (length <= 10) return '1.5rem';      // 24px (text-2xl)
   if (length <= 16) return '1.25rem';     // 20px (text-xl)
-  return '1.125rem';                      // 18px (text-lg) - minimum size before truncation
+  return '0.875rem';                      // 14px (text-sm) - minimum size before truncation
 };
 
 interface MeasurementCardProps {
