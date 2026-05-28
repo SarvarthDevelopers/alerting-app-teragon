@@ -1,5 +1,18 @@
 import { Measurement, Alert, AnomalyConfig, SystemType, AlertHistoryEntry } from '../types';
 
+function generateSerialNumber(timestampStr: string, id: string): string {
+  const date = new Date(timestampStr);
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const hh = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  const ss = String(date.getSeconds()).padStart(2, '0');
+  const numPart = id.replace(/\D/g, '');
+  const seq = numPart.padStart(6, '0') || '000001';
+  return `${yyyy}${mm}${dd}_${hh}${min}${ss}_${seq}`;
+}
+
 export const anomalyConfigs: AnomalyConfig[] = [
   {
     id: 'ac1',
@@ -58,7 +71,7 @@ export const anomalyConfigs: AnomalyConfig[] = [
   }
 ];
 
-export const mockMeasurements: Measurement[] = [
+const baseMeasurements: Measurement[] = [
   {
     id: 'm23',
     serialNumber: 'SN-98674-SN-98674-SN-98674',
@@ -508,6 +521,11 @@ export const mockMeasurements: Measurement[] = [
     })
   }
 ];
+
+export const mockMeasurements: Measurement[] = baseMeasurements.map(m => ({
+  ...m,
+  serialNumber: generateSerialNumber(m.timestamp, m.id)
+}));
 
 export const mockAlertHistory: AlertHistoryEntry[] = [
   {
