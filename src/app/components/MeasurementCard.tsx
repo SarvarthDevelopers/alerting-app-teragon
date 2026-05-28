@@ -408,9 +408,10 @@ export const MeasurementCard = memo(({
                         {/* Overlap Count Badge directly above the ruler segment */}
                         {group.alerts.length > 1 && (
                           <div
-                            className="absolute bottom-[calc(100%+4px)] left-1/2 -translate-x-1/2 bg-black text-white px-1.5 py-0.5 rounded-full text-[9px] font-black z-30 pointer-events-none shadow flex items-center justify-center border whitespace-nowrap"
+                            className="absolute top-0 left-1/2 bg-black text-white px-1.5 py-0.5 rounded-full text-[9px] font-black z-30 pointer-events-none shadow flex items-center justify-center border whitespace-nowrap"
                             style={{
-                              borderColor: getSeverityColor(group.highestSeverity)
+                              borderColor: getSeverityColor(group.highestSeverity),
+                              transform: 'translate(-50%, -50%)'
                             }}
                           >
                             +{group.alerts.length - 1}
