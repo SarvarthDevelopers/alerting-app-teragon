@@ -12,3 +12,14 @@ build/
 .npm/
 pnpm-lock.yaml
 package-lock.json
+
+# Python virtual environment
+scratch/.venv/
+.venv/
+venv/
+ENV/
+*.pyc
+__pycache__/
+
+# Excel reports and local scratch files
+*.xlsx

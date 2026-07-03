@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { UserPlus, Shield, Trash2, Search, Pencil, Calendar, User as UserIcon, Mail } from 'lucide-react';
+import { UserPlus, Shield, Trash2, Search, Pencil, Calendar, User as UserIcon, Mail, Check } from 'lucide-react';
 import { User, UserRole } from '../../../app/types';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '../../../app/components/ui/button';
@@ -60,34 +60,108 @@ export function DesktopUserManagement({ users, setUsers }: DesktopUserManagement
   });
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const getPasswordRequirements = (password: string) => {
+    return [
+      { id: 'length', label: 'At least 8 characters', met: password.length >= 8 },
+      { id: 'uppercase', label: 'At least one uppercase letter', met: /[A-Z]/.test(password) },
+      { id: 'lowercase', label: 'At least one lowercase letter', met: /[a-z]/.test(password) },
+      { id: 'number', label: 'At least one number', met: /[0-9]/.test(password) },
+      { id: 'special', label: 'At least one special character', met: /[^A-Za-z0-9]/.test(password) },
+    ];
+  };
+
+  const validate = (formValues: Partial<User>): Record<string, string> => {
+    const errs: Record<string, string> = {};
+
+    // Full Name
+    if (!formValues.fullName || !formValues.fullName.trim()) {
+      errs.fullName = 'Full name is required';
+    } else if (formValues.fullName.trim().length < 2) {
+      errs.fullName = 'Full name must be at least 2 characters';
+    } else if (!/^[a-zA-Z\s'-]+$/.test(formValues.fullName.trim())) {
+      errs.fullName = 'Full name can only contain letters, spaces, hyphens, and apostrophes';
+    }
+
+    // Email
+    if (!formValues.email || !formValues.email.trim()) {
+      errs.email = 'Email address is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formValues.email.trim())) {
+      errs.email = 'Please enter a valid email address';
+    }
+
+    // Username
+    if (!formValues.username || !formValues.username.trim()) {
+      errs.username = 'Username is required';
+    } else if (formValues.username.trim().length < 3) {
+      errs.username = 'Username must be at least 3 characters';
+    } else if (!/^[a-z0-9._-]+$/.test(formValues.username.trim())) {
+      errs.username = 'Username can only contain lowercase letters, numbers, periods, underscores, and hyphens';
+    } else {
+      // Uniqueness check
+      const usernameExists = users.some(
+        (u) =>
+          u.username.toLowerCase() === formValues.username!.trim().toLowerCase() &&
+          u.id !== editingUserId
+      );
+      if (usernameExists) {
+        errs.username = 'Username is already taken';
+      }
+    }
+
+    // Password
+    const password = formValues.password;
+    const isNew = !editingUserId;
+    if (isNew && (!password || !password.trim())) {
+      errs.password = 'Password is required';
+    } else if (password && password.length > 0) {
+      const requirements = getPasswordRequirements(password);
+      const unmet = requirements.filter(r => !r.met);
+      if (unmet.length > 0) {
+        errs.password = 'Password must meet all complexity requirements';
+      }
+    }
+
+    return errs;
+  };
 
   const saveUser = () => {
-    if (newUser.fullName && newUser.username) {
-      if (editingUserId) {
-        setUsers(users.map(u => u.id === editingUserId ? {
-          ...u,
-          ...newUser,
-          role: newUser.role as UserRole
-        } : u));
-      } else {
-        setUsers([
-          ...users,
-          {
-            id: `u${Date.now()}`,
-            fullName: newUser.fullName!,
-            username: newUser.username!,
-            email: newUser.email,
-            role: newUser.role as UserRole,
-            isActive: newUser.isActive!,
-            forcePasswordChange: newUser.forcePasswordChange!,
-            password: newUser.password,
-            createdAt: new Date().toISOString()
-          }
-        ]);
-      }
-      resetForm();
-      setIsAddDialogOpen(false);
+    const formErrors = validate(newUser);
+    if (Object.keys(formErrors).length > 0) {
+      setErrors(formErrors);
+      return;
     }
+
+    if (editingUserId) {
+      setUsers(users.map(u => u.id === editingUserId ? {
+        ...u,
+        fullName: newUser.fullName!.trim(),
+        username: newUser.username!.trim().toLowerCase(),
+        email: newUser.email!.trim(),
+        role: newUser.role as UserRole,
+        isActive: newUser.isActive!,
+        forcePasswordChange: newUser.forcePasswordChange!,
+        password: newUser.password ? newUser.password : u.password,
+      } : u));
+    } else {
+      setUsers([
+        ...users,
+        {
+          id: `u${Date.now()}`,
+          fullName: newUser.fullName!.trim(),
+          username: newUser.username!.trim().toLowerCase(),
+          email: newUser.email!.trim(),
+          role: newUser.role as UserRole,
+          isActive: newUser.isActive!,
+          forcePasswordChange: newUser.forcePasswordChange!,
+          password: newUser.password,
+          createdAt: new Date().toISOString()
+        }
+      ]);
+    }
+    resetForm();
+    setIsAddDialogOpen(false);
   };
 
   const resetForm = () => {
@@ -101,6 +175,7 @@ export function DesktopUserManagement({ users, setUsers }: DesktopUserManagement
       password: ''
     });
     setEditingUserId(null);
+    setErrors({});
   };
 
   const openEditDialog = (user: User) => {
@@ -111,9 +186,10 @@ export function DesktopUserManagement({ users, setUsers }: DesktopUserManagement
       role: user.role,
       isActive: user.isActive,
       forcePasswordChange: user.forcePasswordChange,
-      password: user.password || ''
+      password: '' // Optional when editing
     });
     setEditingUserId(user.id);
+    setErrors({});
     setIsAddDialogOpen(true);
   };
 
@@ -280,7 +356,12 @@ export function DesktopUserManagement({ users, setUsers }: DesktopUserManagement
       </div>
 
       {/* ── Add User Dialog ── */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+      <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          resetForm();
+        }
+        setIsAddDialogOpen(open);
+      }}>
         <DialogContent className="sm:max-w-md rounded-2xl border-border bg-card">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black">{editingUserId ? 'Edit User' : 'Add New User'}</DialogTitle>
@@ -290,46 +371,146 @@ export function DesktopUserManagement({ users, setUsers }: DesktopUserManagement
           </DialogHeader>
           
             <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Full Name</Label>
+              <div className="space-y-1">
+                <Label className={`text-xs font-bold uppercase tracking-wider transition-colors ${errors.fullName ? 'text-destructive' : 'text-muted-foreground'}`}>Full Name</Label>
                 <Input 
                   placeholder="John Smith"
                   value={newUser.fullName}
-                  onChange={(e) => setNewUser({...newUser, fullName: e.target.value})}
+                  aria-invalid={!!errors.fullName}
+                  onChange={(e) => {
+                    setNewUser({...newUser, fullName: e.target.value});
+                    if (errors.fullName) {
+                      setErrors(prev => ({ ...prev, fullName: '' }));
+                    }
+                  }}
                   className="h-12 bg-background/50 border-border/50 rounded-xl px-4 font-bold focus-visible:ring-4 focus-visible:ring-black/5 focus-visible:border-black transition-all"
                 />
+                <AnimatePresence>
+                  {errors.fullName && (
+                    <motion.p
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="text-[11px] font-bold text-destructive flex items-center gap-1 mt-1 overflow-hidden"
+                    >
+                      <span className="w-1.5 h-1.5 bg-destructive rounded-full shrink-0" />
+                      {errors.fullName}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
               </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Email Address</Label>
-                  <Input 
-                    type="email"
-                    placeholder="john.smith@company.com"
-                    value={newUser.email}
-                    onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                    className="h-12 bg-background/50 border-border/50 rounded-xl px-4 font-bold focus-visible:ring-4 focus-visible:ring-black/5 focus-visible:border-black transition-all"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Username</Label>
+              <div className="space-y-1">
+                <Label className={`text-xs font-bold uppercase tracking-wider transition-colors ${errors.email ? 'text-destructive' : 'text-muted-foreground'}`}>Email Address</Label>
+                <Input 
+                  type="email"
+                  placeholder="john.smith@company.com"
+                  value={newUser.email}
+                  aria-invalid={!!errors.email}
+                  onChange={(e) => {
+                    setNewUser({...newUser, email: e.target.value});
+                    if (errors.email) {
+                      setErrors(prev => ({ ...prev, email: '' }));
+                    }
+                  }}
+                  className="h-12 bg-background/50 border-border/50 rounded-xl px-4 font-bold focus-visible:ring-4 focus-visible:ring-black/5 focus-visible:border-black transition-all"
+                />
+                <AnimatePresence>
+                  {errors.email && (
+                    <motion.p
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="text-[11px] font-bold text-destructive flex items-center gap-1 mt-1 overflow-hidden"
+                    >
+                      <span className="w-1.5 h-1.5 bg-destructive rounded-full shrink-0" />
+                      {errors.email}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className={`text-xs font-bold uppercase tracking-wider transition-colors ${errors.username ? 'text-destructive' : 'text-muted-foreground'}`}>Username</Label>
                   <Input 
                     placeholder="operator.smith"
                     value={newUser.username}
-                    onChange={(e) => setNewUser({...newUser, username: e.target.value.toLowerCase()})}
+                    aria-invalid={!!errors.username}
+                    onChange={(e) => {
+                      setNewUser({...newUser, username: e.target.value.toLowerCase()});
+                      if (errors.username) {
+                        setErrors(prev => ({ ...prev, username: '' }));
+                      }
+                    }}
                     className="h-12 bg-background/50 border-border/50 rounded-xl px-4 font-mono text-sm focus-visible:ring-4 focus-visible:ring-black/5 focus-visible:border-black transition-all"
                   />
+                  <AnimatePresence>
+                    {errors.username && (
+                      <motion.p
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="text-[11px] font-bold text-destructive flex items-center gap-1 mt-1 overflow-hidden"
+                      >
+                        <span className="w-1.5 h-1.5 bg-destructive rounded-full shrink-0" />
+                        {errors.username}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{editingUserId ? 'Change Password' : 'Initial Password'}</Label>
+                <div className="space-y-1">
+                  <Label className={`text-xs font-bold uppercase tracking-wider transition-colors ${errors.password ? 'text-destructive' : 'text-muted-foreground'}`}>{editingUserId ? 'Change Password' : 'Initial Password'}</Label>
                   <Input 
                     type="password"
-                    placeholder="••••••••"
+                    placeholder={editingUserId ? "Keep blank to leave unchanged" : "••••••••"}
                     value={newUser.password}
-                    onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                    aria-invalid={!!errors.password}
+                    onChange={(e) => {
+                      setNewUser({...newUser, password: e.target.value});
+                      if (errors.password) {
+                        setErrors(prev => ({ ...prev, password: '' }));
+                      }
+                    }}
                     className="h-12 bg-background/50 border-border/50 rounded-xl px-4 font-mono text-sm focus-visible:ring-4 focus-visible:ring-black/5 focus-visible:border-black transition-all"
                   />
+                  <AnimatePresence>
+                    {errors.password && (
+                      <motion.p
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="text-[11px] font-bold text-destructive flex items-center gap-1 mt-1 overflow-hidden"
+                      >
+                        <span className="w-1.5 h-1.5 bg-destructive rounded-full shrink-0" />
+                        {errors.password}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
+
+              {/* Real-time Password Complexity Checklist */}
+              {(!editingUserId || (newUser.password && newUser.password.length > 0)) && (
+                <div className="p-3 bg-muted/40 border border-border/50 rounded-xl space-y-2">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block">
+                    {editingUserId ? 'New Password Requirements' : 'Password Requirements'}
+                  </span>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                    {getPasswordRequirements(newUser.password || '').map((req) => (
+                      <div key={req.id} className="flex items-center gap-1.5 text-[11px]">
+                        {req.met ? (
+                          <Check size={11} className="text-emerald-500 stroke-[3]" />
+                        ) : (
+                          <span className="w-1.5 h-1.5 bg-muted-foreground/45 rounded-full ml-0.5" />
+                        )}
+                        <span className={`font-bold tracking-tight ${req.met ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}>
+                          {req.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Role</Label>
                 <Select 
@@ -369,7 +550,6 @@ export function DesktopUserManagement({ users, setUsers }: DesktopUserManagement
             </Button>
             <Button 
               onClick={saveUser}
-              disabled={!newUser.fullName || !newUser.username || (!editingUserId && !newUser.password)}
               className="flex-1 h-12 rounded-xl font-bold"
             >
               {editingUserId ? 'Save Changes' : 'Create User'}
